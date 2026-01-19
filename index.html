@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý danh sách</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        
+        /* Phần link Shopee ở đầu trang */
+        .shopee-header {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-left: 5px solid #ee4d2d;
+        }
+        .shopee-header label { font-weight: bold; color: #ee4d2d; }
+        .shopee-input { flex-grow: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn-shopee { 
+            background-color: #ee4d2d; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .btn-shopee:hover { background-color: #d73211; }
+
+        /* Form nhập liệu */
+        .form-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 12px; display: flex; align-items: center; }
+        .form-group label { width: 120px; font-weight: bold; color: #333; }
+        input[type="text"], input[type="number"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+        .large-input { width: 100%; max-width: 400px; }
+        .time-group input { width: 50px; text-align: center; }
+
+        /* Danh sách */
+        #danh-sach-container { 
+            margin-top: 20px; 
+            padding: 15px; 
+            background: #fff; 
+            border: 1px solid #ddd; 
+            border-radius: 8px;
+            min-height: 200px; 
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+        
+        .controls { margin-top: 20px; }
+        .btn-main { padding: 10px 25px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; margin-right: 10px; }
+        .btn-add { background-color: #28a745; color: white; }
+        .btn-refresh { background-color: #007bff; color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="shopee-header">
+        <label>Link Shopee:</label>
+        <input type="text" id="linkShopee" class="shopee-input" value="https://s.shopee.vn/6VHiHQX7nF" placeholder="Dán link Shopee vào đây...">
+        <button class="btn-shopee" onclick="openShopee()">MỞ SHOPEE</button>
+    </div>
+
+    <div class="form-container">
+        <div class="form-group">
+            <label>Họ và tên:</label>
+            <input type="text" id="hoTen" class="large-input" onchange="savePermanentInfo()">
+        </div>
+        <div class="form-group">
+            <label>Năm sinh:</label>
+            <input type="text" id="namSinh" class="large-input" onchange="savePermanentInfo()">
+        </div>
+        <div class="form-group">
+            <label>Ghi chú:</label>
+            <input type="text" id="ghiChu" class="large-input" onchange="savePermanentInfo()">
+        </div>
+        <div class="form-group">
+            <label>Ngày làm:</label>
+            <input type="text" id="ngayLam" class="large-input" placeholder="Ví dụ: 19/01/2026">
+        </div>
+        <div class="form-group time-group">
+            <label>Thời gian làm:</label>
+            <input type="number" id="bdH" value="8">h <input type="number" id="bdM" value="0">
+            <span style="margin: 0 10px;">đến</span>
+            <input type="number" id="ktH" value="17">h <input type="number" id="ktM" value="0">
+        </div>
+
+        <div class="controls">
+            <button onclick="guiDuLieu()" id="btnGui" class="btn-main btn-add">THÊM VÀO DANH SÁCH</button>
+            <button onclick="loadDanhSach()" class="btn-main btn-refresh">LÀM MỚI</button>
+        </div>
+    </div>
+
+    <h3>Danh sách hiển thị:</h3>
+    <div id="danh-sach-container">Đang tải dữ liệu...</div>
+
+    <script>
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUSwuKDAuwnf19DniRu74FGBbP_LkCM4GFVW7nCNUqwiVs4ppJuqBnoo-zMNwdjhupeQ/exec";
+
+        function openShopee() {
+            const url = document.getElementById('linkShopee').value;
+            if (url) {
+                window.open(url.startsWith('http') ? url : 'https://' + url, '_blank');
+            } else {
+                alert("Vui lòng dán link Shopee!");
+            }
+        }
+
+        function savePermanentInfo() {
+            localStorage.setItem('perma_hoTen', document.getElementById('hoTen').value);
+            localStorage.setItem('perma_namSinh', document.getElementById('namSinh').value);
+            localStorage.setItem('perma_ghiChu', document.getElementById('ghiChu').value);
+        }
+
+        window.onload = function() {
+            document.getElementById('hoTen').value = localStorage.getItem('perma_hoTen') || "";
+            document.getElementById('namSinh').value = localStorage.getItem('perma_namSinh') || "";
+            document.getElementById('ghiChu').value = localStorage.getItem('perma_ghiChu') || "";
+            loadDanhSach();
+        };
+
+        async function loadDanhSach() {
+            try {
+                const response = await fetch(GOOGLE_SCRIPT_URL);
+                document.getElementById('danh-sach-container').innerText = await response.text();
+            } catch (e) { console.error(e); }
+        }
+
+        async function guiDuLieu() {
+            const btn = document.getElementById('btnGui');
+            const data = {
+                hoTen: document.getElementById('hoTen').value,
+                namSinh: document.getElementById('namSinh').value,
+                ghiChu: document.getElementById('ghiChu').value,
+                ngayLam: document.getElementById('ngayLam').value,
+                batDauH: document.getElementById('bdH').value,
+                batDauM: document.getElementById('bdM').value,
+                ketThucH: document.getElementById('ktH').value,
+                ketThucM: document.getElementById('ktM').value
+            };
+
+            if(!data.hoTen || !data.ngayLam) { alert("Nhập Tên và Ngày làm!"); return; }
+
+            btn.innerText = "ĐANG GỬI...";
+            btn.disabled = true;
+
+            try {
+                await fetch(GOOGLE_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: JSON.stringify(data)
+                });
+                alert("Thành công!");
+                setTimeout(loadDanhSach, 1500);
+            } catch (e) { alert("Lỗi!"); }
+            finally { btn.innerText = "THÊM VÀO DANH SÁCH"; btn.disabled = false; }
+        }
+    </script>
+</body>
+</html>
