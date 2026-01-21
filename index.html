@@ -2,164 +2,123 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý danh sách</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Báo Công Siêu Tốc - ChayThu</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
+        :root { --primary: #1a73e8; --bg: #f0f2f5; }
+        body { font-family: -apple-system, system-ui, sans-serif; padding: 10px; margin: 0; background: var(--bg); color: #333; }
+        .card { background: white; padding: 15px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        h3 { margin: 0 0 15px 0; color: var(--primary); text-align: center; font-size: 18px; }
+        label { display: block; margin: 10px 0 4px; font-weight: 600; font-size: 12px; color: #666; text-transform: uppercase; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 16px; background: #fff; outline: none; transition: border 0.2s; }
+        input:focus { border-color: var(--primary); }
         
-        /* Phần link Shopee ở đầu trang */
-        .shopee-header {
-            background-color: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-left: 5px solid #ee4d2d;
-        }
-        .shopee-header label { font-weight: bold; color: #ee4d2d; }
-        .shopee-input { flex-grow: 1; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        .btn-shopee { 
-            background-color: #ee4d2d; 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        .btn-shopee:hover { background-color: #d73211; }
+        /* Chống tràn giờ */
+        .time-row { display: flex; gap: 5px; align-items: center; justify-content: space-between; }
+        .time-box { display: flex; align-items: center; flex: 1; border: 1px solid #ddd; border-radius: 8px; background: #fff; }
+        .time-box select { border: none; padding: 10px 2px; text-align: center; flex: 1; min-width: 0; font-size: 15px; }
+        .sep { font-weight: bold; color: #999; padding: 0 2px; }
 
-        /* Form nhập liệu */
-        .form-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 12px; display: flex; align-items: center; }
-        .form-group label { width: 120px; font-weight: bold; color: #333; }
-        input[type="text"], input[type="number"] { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-        .large-input { width: 100%; max-width: 400px; }
-        .time-group input { width: 50px; text-align: center; }
+        button { width: 100%; padding: 16px; background: var(--primary); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; box-shadow: 0 4px 6px rgba(26,115,232,0.2); }
+        button:active { transform: scale(0.98); }
+        button:disabled { background: #ccc; box-shadow: none; }
 
-        /* Danh sách */
-        #danh-sach-container { 
-            margin-top: 20px; 
-            padding: 15px; 
-            background: #fff; 
-            border: 1px solid #ddd; 
-            border-radius: 8px;
-            min-height: 200px; 
-            white-space: pre-wrap;
-            line-height: 1.6;
-        }
-        
-        .controls { margin-top: 20px; }
-        .btn-main { padding: 10px 25px; cursor: pointer; border: none; border-radius: 4px; font-weight: bold; margin-right: 10px; }
-        .btn-add { background-color: #28a745; color: white; }
-        .btn-refresh { background-color: #007bff; color: white; }
+        /* Lịch sử Real-time */
+        .log-item { background: white; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #34a853; box-shadow: 0 1px 3px rgba(0,0,0,0.05); animation: slideIn 0.3s ease-out; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .log-name { font-weight: bold; color: var(--primary); font-size: 15px; display: block; }
+        .log-note { font-size: 14px; color: #333; margin: 5px 0; word-break: break-word; line-height: 1.4; }
+        .log-tag { background: #f0f4f8; color: #555; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; display: inline-block; }
     </style>
 </head>
 <body>
 
-    <div class="shopee-header">
-        <label>Link Shopee:</label>
-        <input type="text" id="linkShopee" class="shopee-input" value="https://s.shopee.vn/6VHiHQX7nF" placeholder="Dán link Shopee vào đây...">
-        <button class="btn-shopee" onclick="openShopee()">MỞ SHOPEE</button>
+<div class="card">
+    <h3>BÁO CÔNG CHAYTHU</h3>
+    <label>Họ Tên (Ghi nhớ)</label>
+    <input type="text" id="name" placeholder="Tên của bạn..." oninput="localStorage.setItem('ct_user', this.value)">
+    
+    <label>Nội dung công việc</label>
+    <input type="text" id="note" placeholder="Bạn đã làm gì?">
+    
+    <label>Thời gian làm việc</label>
+    <div class="time-row">
+        <div class="time-box"><select id="sh"></select><span class="sep">:</span><select id="sm"></select></div>
+        <span style="font-size:12px;color:#999">➔</span>
+        <div class="time-box"><select id="eh"></select><span class="sep">:</span><select id="em"></select></div>
     </div>
+    
+    <button onclick="submitData()" id="btnSend">GỬI BÁO CÔNG</button>
+</div>
 
-    <div class="form-container">
-        <div class="form-group">
-            <label>Họ và tên:</label>
-            <input type="text" id="hoTen" class="large-input" onchange="savePermanentInfo()">
-        </div>
-        <div class="form-group">
-            <label>Năm sinh:</label>
-            <input type="text" id="namSinh" class="large-input" onchange="savePermanentInfo()">
-        </div>
-        <div class="form-group">
-            <label>Ghi chú:</label>
-            <input type="text" id="ghiChu" class="large-input" onchange="savePermanentInfo()">
-        </div>
-        <div class="form-group">
-            <label>Ngày làm:</label>
-            <input type="text" id="ngayLam" class="large-input" placeholder="Ví dụ: 19/01/2026">
-        </div>
-        <div class="form-group time-group">
-            <label>Thời gian làm:</label>
-            <input type="number" id="bdH" value="8">h <input type="number" id="bdM" value="0">
-            <span style="margin: 0 10px;">đến</span>
-            <input type="number" id="ktH" value="17">h <input type="number" id="ktM" value="0">
-        </div>
+<div id="logs"></div>
 
-        <div class="controls">
-            <button onclick="guiDuLieu()" id="btnGui" class="btn-main btn-add">THÊM VÀO DANH SÁCH</button>
-            <button onclick="loadDanhSach()" class="btn-main btn-refresh">LÀM MỚI</button>
-        </div>
-    </div>
+<script>
+    const SB_URL = "https://bcxaekeimoecixovogmm.supabase.co";
+    const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjeGFla2VpbW9lY2l4b3ZvZ21tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NzM2NDEsImV4cCI6MjA4NDU0OTY0MX0.lh1C9UUq7Cim1uSK49MOeVJbTKc7L0MOUp-EZM9iehA";
+    
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    <h3>Danh sách hiển thị:</h3>
-    <div id="danh-sach-container">Đang tải dữ liệu...</div>
+    window.onload = () => {
+        initTime();
+        document.getElementById('name').value = localStorage.getItem('ct_user') || '';
+        loadLogs();
+        
+        // Realtime: Tự động cập nhật khi có người khác gửi
+        _sb.channel('any').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_logs' }, payload => {
+            renderLog(payload.new, true);
+        }).subscribe();
+    };
 
-    <script>
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwUSwuKDAuwnf19DniRu74FGBbP_LkCM4GFVW7nCNUqwiVs4ppJuqBnoo-zMNwdjhupeQ/exec";
-
-        function openShopee() {
-            const url = document.getElementById('linkShopee').value;
-            if (url) {
-                window.open(url.startsWith('http') ? url : 'https://' + url, '_blank');
-            } else {
-                alert("Vui lòng dán link Shopee!");
+    function initTime() {
+        const fill = (id, max, def) => {
+            const s = document.getElementById(id);
+            for(let i=0; i<max; i++) {
+                let v = i.toString().padStart(2, '0');
+                s.add(new Option(v, v, i===def, i===def));
             }
-        }
-
-        function savePermanentInfo() {
-            localStorage.setItem('perma_hoTen', document.getElementById('hoTen').value);
-            localStorage.setItem('perma_namSinh', document.getElementById('namSinh').value);
-            localStorage.setItem('perma_ghiChu', document.getElementById('ghiChu').value);
-        }
-
-        window.onload = function() {
-            document.getElementById('hoTen').value = localStorage.getItem('perma_hoTen') || "";
-            document.getElementById('namSinh').value = localStorage.getItem('perma_namSinh') || "";
-            document.getElementById('ghiChu').value = localStorage.getItem('perma_ghiChu') || "";
-            loadDanhSach();
         };
+        fill('sh', 24, 8); fill('sm', 60, 0); fill('eh', 24, 20); fill('em', 60, 0);
+    }
 
-        async function loadDanhSach() {
-            try {
-                const response = await fetch(GOOGLE_SCRIPT_URL);
-                document.getElementById('danh-sach-container').innerText = await response.text();
-            } catch (e) { console.error(e); }
+    async function loadLogs() {
+        const { data } = await _sb.from('work_logs').select('*').order('id', { ascending: false }).limit(20);
+        if(data) data.forEach(log => renderLog(log, false));
+    }
+
+    function renderLog(log, isNew) {
+        const html = `
+            <div class="log-item">
+                <span class="log-name">${log.name}</span>
+                <div class="log-note">${log.note || '---'}</div>
+                <div class="log-tag">⏱ ${log.date} | ${log.time_range}</div>
+            </div>`;
+        const container = document.getElementById('logs');
+        if(isNew) container.insertAdjacentHTML('afterbegin', html);
+        else container.insertAdjacentHTML('beforeend', html);
+    }
+
+    async function submitData() {
+        const btn = document.getElementById('btnSend');
+        const name = document.getElementById('name').value;
+        const note = document.getElementById('note').value;
+        const date = new Date().toLocaleDateString('vi-VN');
+        const time = `${document.getElementById('sh').value}:${document.getElementById('sm').value} - ${document.getElementById('eh').value}:${document.getElementById('em').value}`;
+
+        if (!name) return alert("Vui lòng nhập tên!");
+        
+        btn.innerText = "ĐANG LƯU..."; btn.disabled = true;
+
+        const { error } = await _sb.from('work_logs').insert([{ name, note, date, time_range: time }]);
+
+        if (!error) {
+            document.getElementById('note').value = '';
+        } else {
+            alert("Lỗi lưu dữ liệu: " + error.message);
         }
-
-        async function guiDuLieu() {
-            const btn = document.getElementById('btnGui');
-            const data = {
-                hoTen: document.getElementById('hoTen').value,
-                namSinh: document.getElementById('namSinh').value,
-                ghiChu: document.getElementById('ghiChu').value,
-                ngayLam: document.getElementById('ngayLam').value,
-                batDauH: document.getElementById('bdH').value,
-                batDauM: document.getElementById('bdM').value,
-                ketThucH: document.getElementById('ktH').value,
-                ketThucM: document.getElementById('ktM').value
-            };
-
-            if(!data.hoTen || !data.ngayLam) { alert("Nhập Tên và Ngày làm!"); return; }
-
-            btn.innerText = "ĐANG GỬI...";
-            btn.disabled = true;
-
-            try {
-                await fetch(GOOGLE_SCRIPT_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    body: JSON.stringify(data)
-                });
-                alert("Thành công!");
-                setTimeout(loadDanhSach, 1500);
-            } catch (e) { alert("Lỗi!"); }
-            finally { btn.innerText = "THÊM VÀO DANH SÁCH"; btn.disabled = false; }
-        }
-    </script>
+        btn.innerText = "GỬI BÁO CÔNG"; btn.disabled = false;
+    }
+</script>
 </body>
 </html>
