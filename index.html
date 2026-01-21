@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Báo Công</title>
+    <title>Báo Công ChayThu</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary: #1a73e8;
             --primary-dark: #1557b0;
             --success: #34a853;
+            --info: #673ab7;
             --bg: #f8f9fa;
             --text: #202124;
             --gray: #5f6368;
@@ -29,55 +31,65 @@
             border: 1px solid #eee;
         }
 
-        h3 { 
-            margin: 0 0 20px 0; text-align: center; color: var(--primary);
-            font-size: 20px; letter-spacing: -0.5px;
-        }
+        h3 { margin: 0 0 20px 0; text-align: center; color: var(--primary); font-size: 20px; }
 
-        .form-group { margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; position: relative; }
         
-        label { 
-            display: block; margin-bottom: 6px; font-weight: 600; 
-            font-size: 13px; color: var(--gray);
-        }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 13px; color: var(--gray); }
 
         input, select { 
             width: 100%; padding: 12px 15px; border: 1.5px solid #e0e0e0; 
             border-radius: 10px; box-sizing: border-box; font-size: 16px; 
-            background: #fff; transition: all 0.2s ease; outline: none;
+            background: #fff; outline: none; transition: border 0.2s;
         }
 
-        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(26,115,232,0.1); }
+        input:focus { border-color: var(--primary); }
 
-        /* Giao diện chọn giờ chuyên nghiệp */
+        /* Nút xóa nhanh - Đã căn giữa hoàn hảo */
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        
+        .clear-btn {
+            position: absolute;
+            right: 10px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            color: #666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            line-height: 0;
+            padding: 0;
+            transition: background 0.2s;
+        }
+
+        .clear-btn:hover { background: #d0d0d0; color: #333; }
+
         .time-row { display: flex; gap: 8px; align-items: center; }
         .time-box { 
             display: flex; align-items: center; flex: 1; 
             background: #f1f3f4; border-radius: 10px; padding: 2px 8px;
         }
-        .time-box select { 
-            background: transparent; border: none; padding: 10px 0;
-            text-align: center; font-weight: 500; cursor: pointer;
-        }
-        .sep { font-weight: bold; color: var(--gray); padding: 0 4px; }
+        .time-box select { background: transparent; border: none; padding: 10px 0; text-align: center; width: 100%; }
 
         button { 
             width: 100%; padding: 16px; background: var(--primary); color: white; 
             border: none; border-radius: 12px; font-size: 16px; font-weight: bold; 
-            cursor: pointer; margin-top: 10px; transition: all 0.2s;
-            box-shadow: 0 4px 6px rgba(26,115,232,0.2);
+            cursor: pointer; margin-top: 10px; box-shadow: 0 4px 6px rgba(26,115,232,0.2);
         }
 
-        button:hover { background: var(--primary-dark); }
-        button:active { transform: scale(0.97); box-shadow: none; }
-        button:disabled { background: #dadce0; cursor: not-allowed; box-shadow: none; }
+        button:active { transform: scale(0.97); }
 
-        /* Danh sách lịch sử */
-        .log-header { 
-            display: flex; justify-content: space-between; align-items: center; 
-            margin-bottom: 12px; padding: 0 5px;
+        .excel-btn {
+            background: #fff; color: var(--success); border: 1.5px solid var(--success);
+            padding: 8px 15px; font-size: 14px; margin: 0;
+            box-shadow: none; display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: auto; height: 38px;
         }
-        .log-header h4 { margin: 0; color: var(--gray); font-size: 14px; }
 
         .log-item { 
             background: white; padding: 16px; border-radius: 14px; 
@@ -86,75 +98,78 @@
             animation: fadeIn 0.4s ease-out;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .log-name { font-weight: 700; color: var(--primary); font-size: 16px; }
-        .log-note { font-size: 15px; color: #3c4043; margin: 8px 0; word-break: break-word; }
-        .log-meta { display: flex; flex-wrap: wrap; gap: 8px; }
-        .tag { 
-            background: #e8f0fe; color: var(--primary); 
-            padding: 4px 10px; border-radius: 6px; 
-            font-size: 12px; font-weight: 600;
-        }
-        .tag-time { background: #e6f4ea; color: var(--success); }
+        .log-note { font-size: 14px; color: #3c4043; margin: 8px 0; font-style: italic; }
+        .log-meta { display: flex; flex-wrap: wrap; gap: 6px; }
+        .tag { background: #f1f3f4; color: var(--gray); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+        .tag-work { background: #e6f4ea; color: var(--success); }
+        .tag-sent { background: #f3e5f5; color: var(--info); }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <h3>BÁO CÔNG </h3>
+        <h3>BÁO CÔNG CHAYTHU</h3>
         
         <div class="form-group">
             <label>HỌ VÀ TÊN</label>
-            <input type="text" id="name" placeholder="Nhập họ tên của bạn..." oninput="localStorage.setItem('ct_user', this.value)">
+            <input type="text" id="name" placeholder="Ví dụ: Nguyễn Văn Nam..." oninput="handleNameInput(this)">
+        </div>
+
+        <div class="form-group">
+            <label>NGÀY LÀM VIỆC</label>
+            <input type="date" id="work_date">
         </div>
         
         <div class="form-group">
-            <label>GHI CHÚ</label>
-            <input type="text" id="note" placeholder="Nếu có ghi chú nhập vào đây">
+            <label>NỘI DUNG GHI CHÚ</label>
+            <div class="input-wrapper">
+                <input type="text" id="note" placeholder="Nhập ghi chú tại đây..." oninput="localStorage.setItem('ct_note', this.value)">
+                <button class="clear-btn" onclick="clearNote()">✕</button>
+            </div>
         </div>
         
         <div class="form-group">
-            <label>THỜI GIAN LÀM VIỆC</label>
+            <label>KHOẢNG THỜI GIAN</label>
             <div class="time-row">
-                <div class="time-box">
-                    <select id="sh"></select><span class="sep">:</span><select id="sm"></select>
-                </div>
-                <span style="color:#999; font-size: 12px;">ĐẾN</span>
-                <div class="time-box">
-                    <select id="eh"></select><span class="sep">:</span><select id="em"></select>
-                </div>
+                <div class="time-box"><select id="sh"></select>:<select id="sm"></select></div>
+                <span style="color:#999; font-size: 12px;">➔</span>
+                <div class="time-box"><select id="eh"></select>:<select id="em"></select></div>
             </div>
         </div>
         
         <button onclick="submitData()" id="btnSend">GỬI BÁO CÔNG</button>
     </div>
 
-    <div class="log-header">
-        <h4>LỊCH SỬ BÁO CÔNG GẦN ĐÂY</h4>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h4 style="margin:0; font-size:13px; color:var(--gray); text-transform: uppercase; letter-spacing: 0.5px;">Lịch sử gần đây</h4>
+        <button class="excel-btn" onclick="exportExcel()">📊 Xuất Excel</button>
     </div>
+    
     <div id="logs"></div>
 </div>
 
 <script>
-    // GIỮ NGUYÊN THÔNG TIN SUPABASE CỦA BẠN
     const SB_URL = "https://bcxaekeimoecixovogmm.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjeGFla2VpbW9lY2l4b3ZvZ21tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NzM2NDEsImV4cCI6MjA4NDU0OTY0MX0.lh1C9UUq7Cim1uSK49MOeVJbTKc7L0MOUp-EZM9iehA";
-    
     const _sb = supabase.createClient(SB_URL, SB_KEY);
+
+    function formatName(str) { return str.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase()); }
+    function handleNameInput(el) { el.value = formatName(el.value); localStorage.setItem('ct_user', el.value); }
+    function clearNote() { document.getElementById('note').value = ''; localStorage.removeItem('ct_note'); document.getElementById('note').focus(); }
 
     window.onload = () => {
         initTime();
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('work_date').setAttribute('max', todayStr);
+        document.getElementById('work_date').value = todayStr;
         document.getElementById('name').value = localStorage.getItem('ct_user') || '';
+        document.getElementById('note').value = localStorage.getItem('ct_note') || '';
         loadLogs();
-        
-        _sb.channel('any').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_logs' }, payload => {
-            renderLog(payload.new, true);
-        }).subscribe();
+        _sb.channel('any').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_logs' }, payload => renderLog(payload.new, true)).subscribe();
     };
 
     function initTime() {
@@ -169,20 +184,22 @@
     }
 
     async function loadLogs() {
-        const { data } = await _sb.from('work_logs').select('*').order('id', { ascending: false }).limit(20);
+        const { data } = await _sb.from('work_logs').select('*').order('id', { ascending: false }).limit(30);
         const container = document.getElementById('logs');
         container.innerHTML = ''; 
         if(data) data.forEach(log => renderLog(log, false));
     }
 
     function renderLog(log, isNew) {
+        const displayDate = log.date.split('-').reverse().join('/');
         const html = `
             <div class="log-item">
                 <div class="log-name">${log.name}</div>
-                <div class="log-note">${log.note || 'Không có ghi chú'}</div>
+                ${log.note ? `<div class="log-note">${log.note}</div>` : ''}
                 <div class="log-meta">
-                    <span class="tag">📅 ${log.date}</span>
-                    <span class="tag tag-time">⏱ ${log.time_range}</span>
+                    <span class="tag">📅 ${displayDate}</span>
+                    <span class="tag tag-work">⏱ ${log.time_range}</span>
+                    <span class="tag tag-sent">📤 Gửi: ${log.created_at_time || '---'}</span>
                 </div>
             </div>`;
         const container = document.getElementById('logs');
@@ -192,23 +209,45 @@
 
     async function submitData() {
         const btn = document.getElementById('btnSend');
-        const name = document.getElementById('name').value;
-        const note = document.getElementById('note').value;
-        const date = new Date().toLocaleDateString('vi-VN');
-        const time = `${document.getElementById('sh').value}:${document.getElementById('sm').value} - ${document.getElementById('eh').value}:${document.getElementById('em').value}`;
+        const name = document.getElementById('name').value.trim();
+        const rawNote = document.getElementById('note').value.trim();
+        const workDate = document.getElementById('work_date').value;
+        const finalNote = rawNote ? "Ghi chú: " + rawNote : "";
+        const timeSentStr = new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        const workTimeRange = `${document.getElementById('sh').value}:${document.getElementById('sm').value} - ${document.getElementById('eh').value}:${document.getElementById('em').value}`;
 
         if (!name) return alert("Vui lòng nhập họ tên!");
-        
         btn.innerText = "ĐANG LƯU..."; btn.disabled = true;
 
-        const { error } = await _sb.from('work_logs').insert([{ name, note, date, time_range: time }]);
+        const { error } = await _sb.from('work_logs').insert([{ 
+            name: name, note: finalNote, date: workDate, 
+            time_range: workTimeRange, created_at_time: timeSentStr
+        }]);
 
         if (!error) {
-            document.getElementById('note').value = '';
+            btn.innerText = "THÀNH CÔNG!";
+            setTimeout(() => { btn.innerText = "GỬI BÁO CÔNG"; btn.disabled = false; }, 1000);
         } else {
             alert("Lỗi: " + error.message);
+            btn.disabled = false; btn.innerText = "GỬI BÁO CÔNG";
         }
-        btn.innerText = "GỬI BÁO CÔNG"; btn.disabled = false;
+    }
+
+    async function exportExcel() {
+        const { data, error } = await _sb.from('work_logs').select('name, date, time_range, note, created_at_time').order('date', { ascending: false });
+        if (error) return alert("Không thể lấy dữ liệu!");
+        
+        const worksheet = XLSX.utils.json_to_sheet(data.map(item => ({
+            "Họ Tên": item.name,
+            "Ngày Làm": item.date,
+            "Khoảng Giờ": item.time_range,
+            "Ghi Chú": item.note,
+            "Giờ Gửi": item.created_at_time
+        })));
+        
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "BaoCong");
+        XLSX.writeFile(workbook, `BaoCong_ChayThu_${new Date().toLocaleDateString('vi-VN')}.xlsx`);
     }
 </script>
 </body>
