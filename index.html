@@ -7,188 +7,105 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        :root {
-            --primary: #1a73e8;
-            --shopee: #ee4d2d;
-            --success: #34a853;
-            --bg: #ffffff;
-            --card-bg: #f8f9fa;
-        }
+        :root { --primary: #1a73e8; --shopee: #ee4d2d; --success: #34a853; --gray: #5f6368; }
+        body, html { height: 100%; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f1f3f4; overflow-x: hidden; }
+        
+        /* DÒNG TIÊU ĐỀ TRÊN CÙNG */
+        .top-banner { background: var(--primary); color: white; text-align: center; padding: 10px; font-weight: 800; font-size: 14px; letter-spacing: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
 
-        body, html { 
-            height: 100%; margin: 0; padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: var(--bg); overflow-x: hidden;
-        }
+        .screen { display: none; width: 100%; min-height: 100vh; box-sizing: border-box; padding: 20px; }
+        .screen.active { display: block; }
 
-        /* Quản lý ẩn hiện màn hình */
-        .screen {
-            display: none; /* Mặc định ẩn tất cả */
-            width: 100%;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
+        /* THÔNG BÁO QUẢN TRỊ */
+        #admin-notice { display: none; width: 100%; max-width: 400px; margin: 0 auto 20px auto; background: #fff; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; }
+        .announcement-img { width: 100%; display: block; object-fit: cover; border-bottom: 1px solid #f1f1f1; }
+        .announcement-text { padding: 12px 15px; color: #333; font-size: 14px; font-weight: 500; line-height: 1.5; white-space: pre-wrap; }
 
-        .screen.active {
-            display: flex; /* Chỉ hiện màn hình có class active */
-            flex-direction: column;
-        }
+        /* TRANG CHỦ */
+        #screen-home { background: #ffffff; text-align: center; }
+        .home-content { display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 20px auto; align-items: center; }
+        .btn-shopee-large { width: 100%; background: var(--shopee); color: white; text-decoration: none; padding: 45px 20px; border-radius: 25px; font-size: 22px; font-weight: 900; display: flex; flex-direction: column; align-items: center; box-shadow: 0 12px 25px rgba(238, 77, 45, 0.25); box-sizing: border-box; }
+        .btn-work-mid { width: 85%; background: var(--primary); color: white; border: none; padding: 25px 20px; border-radius: 20px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 8px 20px rgba(26, 115, 232, 0.2); }
 
-        /* MÀN HÌNH 1: TRANG CHỦ */
-        #screen-home {
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            background: linear-gradient(180deg, #ffffff 0%, #f1f3f4 100%);
-        }
+        /* BÁO CÔNG */
+        .header { display: flex; align-items: center; margin-bottom: 20px; }
+        .btn-back { background: #e0e0e0; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; margin-right: 15px; font-size: 13px; }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .form-group { margin-bottom: 15px; position: relative; }
+        label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 13px; color: var(--gray); }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; outline: none; background: #fafafa; }
+        .clear-btn { position: absolute; right: 10px; top: 35px; width: 24px; height: 24px; background: #ccc; color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: none; z-index: 5; }
+        .time-row { display: flex; gap: 8px; align-items: center; }
+        .time-box { flex: 1; background: #f1f3f4; border-radius: 10px; display: flex; align-items: center; padding: 0 5px; }
+        .time-box select { background: transparent; border: none; padding: 10px 0; font-weight: bold; }
+        #btnSend { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; }
 
-        .home-container {
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-
-        .welcome-text {
-            font-size: 24px;
-            font-weight: 800;
-            color: #3c4043;
-            margin-bottom: 40px;
-            letter-spacing: -0.5px;
-        }
-
-        .nav-card {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            padding: 25px;
-            margin-bottom: 20px;
-            border-radius: 24px;
-            text-decoration: none;
-            color: white;
-            font-weight: 700;
-            font-size: 18px;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-            transition: all 0.2s;
-        }
-
-        .nav-card:active { transform: scale(0.96); opacity: 0.9; }
-        .btn-shopee { background: var(--shopee); }
-        .btn-work { background: var(--primary); }
-        .icon-circle {
-            width: 50px; height: 50px; background: rgba(255,255,255,0.2);
-            border-radius: 15px; display: flex; align-items: center;
-            justify-content: center; font-size: 24px; margin-right: 20px;
-        }
-
-        /* MÀN HÌNH 2: BÁO CÔNG */
-        #screen-work {
-            padding: 15px;
-            background: #f1f3f4;
-        }
-
-        .header {
-            display: flex;
-            align-items: center;
-            padding: 10px 0 20px 0;
-        }
-
-        .btn-back {
-            background: white; border: none; padding: 10px 15px;
-            border-radius: 12px; font-weight: 700; color: var(--gray);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-right: 15px;
-        }
-
-        .card { 
-            background: white; padding: 20px; border-radius: 20px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;
-        }
-
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 8px; font-weight: 700; font-size: 13px; color: #5f6368; }
-        input, select { 
-            width: 100%; padding: 14px; border: 1.5px solid #eee; 
-            border-radius: 12px; font-size: 16px; background: #f8f9fa;
-            box-sizing: border-box; outline: none;
-        }
-
-        .time-row { display: flex; gap: 10px; align-items: center; }
-        .time-box { flex: 1; background: #f1f3f4; border-radius: 12px; display: flex; align-items: center; padding: 0 10px; }
-        .time-box select { background: transparent; border: none; padding: 12px 0; text-align: center; }
-
-        #btnSend { 
-            width: 100%; padding: 18px; background: var(--primary); color: white; 
-            border: none; border-radius: 15px; font-size: 16px; font-weight: 800;
-            box-shadow: 0 4px 10px rgba(26,115,232,0.3);
-        }
-
-        .history-section { margin-top: 10px; }
-        .filter-bar { 
-            display: flex; gap: 10px; margin-bottom: 15px; 
-            align-items: center; justify-content: space-between;
-        }
-
-        .log-item { 
-            background: white; padding: 16px; border-radius: 18px; 
-            margin-bottom: 12px; border-left: 6px solid var(--success);
-        }
+        /* LỊCH SỬ */
+        .log-item { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; border-left: 6px solid var(--success); box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
+        .log-name { font-weight: 800; color: var(--primary); font-size: 16px; margin-bottom: 4px; }
+        .log-note { font-size: 14px; color: #333; margin: 6px 0; line-height: 1.4; }
+        .log-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .tag { background: #f1f3f4; color: var(--gray); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+        .tag-time { background: #e8f5e9; color: var(--success); }
     </style>
 </head>
 <body>
 
-    <div id="screen-home" class="screen active">
-        <div class="home-container">
-            <div class="welcome-text">CHAYTHU CÔNG VIỆC</div>
-            
-            <a href="https://s.shopee.vn/6VHiHQX7nF" target="_blank" class="nav-card btn-shopee">
-                <div class="icon-circle">🛍️</div>
-                <span>MUA SẮM SHOPEE</span>
-            </a>
+    <div class="top-banner">CHAYTHU - HỆ THỐNG QUẢN LÝ NỘI BỘ</div>
 
-            <button onclick="changeScreen('screen-work')" class="nav-card btn-work">
-                <div class="icon-circle">📝</div>
-                <span>VÀO BÁO CÔNG</span>
+    <div id="screen-home" class="screen active">
+        <div class="home-content">
+            <h2 style="color: #202124; margin-bottom: 10px;">CHAYTHU MENU</h2>
+            
+            <div id="admin-notice">
+                <div class="announcement-text" id="notice-text"></div>
+            </div>
+
+            <a href="https://s.shopee.vn/6VHiHQX7nF" target="_blank" class="btn-shopee-large">
+                <span style="font-size: 45px; margin-bottom: 10px;">🛍️</span> MUA SẮM SHOPEE
+            </a>
+            <button onclick="changeScreen('screen-work')" class="btn-work-mid">
+                <span style="font-size: 20px;">📝</span> VÀO BÁO CÔNG
             </button>
         </div>
     </div>
 
     <div id="screen-work" class="screen">
         <div class="header">
-            <button class="btn-back" onclick="changeScreen('screen-home')">← THOÁT</button>
-            <h3 style="margin:0; color: var(--primary)">BÁO CÔNG</h3>
+            <button class="btn-back" onclick="changeScreen('screen-home')">← QUAY LẠI</button>
+            <h3 style="margin:0; color: var(--primary); font-size: 18px;">BÁO CÔNG VIỆC</h3>
         </div>
-
         <div class="card">
             <div class="form-group">
                 <label>HỌ VÀ TÊN</label>
-                <input type="text" id="name" placeholder="Nhập họ tên..." oninput="handleNameInput(this)">
+                <input type="text" id="name" placeholder="Nhập tên..." oninput="handleNameInput(this)">
             </div>
             <div class="form-group">
-                <label>GHI CHÚ</label>
-                <input type="text" id="note" placeholder="Nội dung công việc..." oninput="localStorage.setItem('ct_note', this.value)">
+                <label>NGÀY LÀM VIỆC</label>
+                <input type="date" id="work_date">
             </div>
             <div class="form-group">
-                <label>KHOẢNG THỜI GIAN</label>
+                <label>NỘI DUNG GHI CHÚ</label>
+                <input type="text" id="note" placeholder="Nhập ghi chú..." oninput="handleNoteSave(this)">
+                <button class="clear-btn" id="clearNote" onclick="clearNoteInput()">✕</button>
+            </div>
+            <div class="form-group">
+                <label>THỜI GIAN LÀM</label>
                 <div class="time-row">
-                    <div class="time-box"><select id="sh"></select></div>
-                    <span style="font-weight: bold">:</span>
-                    <div class="time-box"><select id="sm"></select></div>
-                    <span style="color:#999">➔</span>
-                    <div class="time-box"><select id="eh"></select></div>
-                    <span style="font-weight: bold">:</span>
+                    <div class="time-box"><select id="sh"></select></div><span>:</span>
+                    <div class="time-box"><select id="sm"></select></div><span style="color:#999;">➔</span>
+                    <div class="time-box"><select id="eh"></select></div><span>:</span>
                     <div class="time-box"><select id="em"></select></div>
                 </div>
             </div>
-            <input type="hidden" id="work_date">
-            <button onclick="submitData()" id="btnSend">GỬI BÁO CÔNG</button>
+            <button onclick="submitData()" id="btnSend">XÁC NHẬN GỬI</button>
         </div>
-
         <div class="history-section">
-            <div class="filter-bar">
-                <input type="text" id="filterName" style="flex:1; padding: 10px; border-radius: 10px; border:1px solid #ddd;" placeholder="Tìm tên..." oninput="filterLogs(this)">
-                <button onclick="exportExcel()" style="background:white; border:1px solid var(--success); color:var(--success); padding:10px; border-radius:10px; font-weight:bold;">📊 EXCEL</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <span style="font-weight: 800; font-size: 13px; color: var(--gray);">🕒 LỊCH SỬ BÁO CÔNG</span>
+                <button onclick="exportExcelByFilter()" style="font-size: 11px; background: #fff; border: 1.5px solid var(--success); color: var(--success); padding: 5px 10px; border-radius: 8px; font-weight: bold;">📊 XUẤT EXCEL</button>
             </div>
+            <input type="text" id="filterName" placeholder="Tìm tên để lọc..." oninput="filterLogs(this)" style="margin-bottom: 12px; padding: 12px; font-size: 14px; background: white; border: 1px solid #ddd; border-radius: 10px; width: 100%; box-sizing: border-box;">
             <div id="logs"></div>
         </div>
     </div>
@@ -196,35 +113,68 @@
 <script>
     const SB_URL = "https://bcxaekeimoecixovogmm.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjeGFla2VpbW9lY2l4b3ZvZ21tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NzM2NDEsImV4cCI6MjA4NDU0OTY0MX0.lh1C9UUq7Cim1uSK49MOeVJbTKc7L0MOUp-EZM9iehA";
-    const _sb = supabase.createClient(SB_URL, SB_KEY);
-    let allLogs = [];
+    
+    // CẤU HÌNH AUTH ĐỂ KHÔNG BỊ EDGE CHẶN
+    const _sb = supabase.createClient(SB_URL, SB_KEY, {
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
 
-    // HÀM CHUYỂN MÀN HÌNH QUAN TRỌNG
+    let allLogs = []; let currentDisplayedLogs = [];
+
     function changeScreen(screenId) {
-        // Ẩn tất cả màn hình
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        // Hiện màn hình được chọn
-        const target = document.getElementById(screenId);
-        target.classList.add('active');
-        // Luôn cuộn lên đầu trang khi chuyển màn hình
+        document.getElementById(screenId).classList.add('active');
         window.scrollTo(0, 0);
     }
 
     function formatName(str) { return str.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase()); }
     function handleNameInput(el) { el.value = formatName(el.value); localStorage.setItem('ct_user', el.value); }
+    function handleNoteSave(el) { localStorage.setItem('ct_note', el.value); toggleClearBtn(el.value); }
+    function toggleClearBtn(val) { document.getElementById('clearNote').style.display = (val && val.length > 0) ? 'flex' : 'none'; }
+    function clearNoteInput() { const input = document.getElementById('note'); input.value = ""; localStorage.setItem('ct_note', ""); toggleClearBtn(""); input.focus(); }
 
     window.onload = () => {
-        initTime();
-        document.getElementById('work_date').value = new Date().toISOString().split('T')[0];
+        initTime(); loadNotice(); loadLogs();
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('work_date').value = today;
         document.getElementById('name').value = localStorage.getItem('ct_user') || '';
-        document.getElementById('note').value = localStorage.getItem('ct_note') || '';
-        loadLogs();
-        _sb.channel('any').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_logs' }, () => loadLogs()).subscribe();
+        const savedNote = localStorage.getItem('ct_note') || '';
+        document.getElementById('note').value = savedNote; toggleClearBtn(savedNote);
+
+        // REALTIME KẾT NỐI
+        _sb.channel('db-settings').on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => loadNotice()).subscribe((s) => console.log('Notice Status:', s));
+        _sb.channel('db-logs').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_logs' }, () => loadLogs()).subscribe((s) => console.log('Logs Status:', s));
     };
+
+    async function loadNotice() {
+        const { data } = await _sb.from('settings').select('*').eq('id', 1).single();
+        const noticeBox = document.getElementById('admin-notice');
+        const noticeText = document.getElementById('notice-text');
+        
+        // Xóa sạch ảnh cũ
+        const oldImgs = noticeBox.querySelectorAll('.announcement-img');
+        oldImgs.forEach(img => img.remove());
+
+        if (data && data.is_active) {
+            noticeBox.style.display = 'block';
+            if (data.notice_image_url) {
+                const links = data.notice_image_url.split(',');
+                links.reverse().forEach(link => { // reverse để ảnh đầu tiên nằm trên cùng
+                    const url = link.trim();
+                    if(url) {
+                        const img = document.createElement('img');
+                        img.src = url; img.className = 'announcement-img';
+                        noticeBox.insertBefore(img, noticeBox.firstChild);
+                    }
+                });
+            }
+            noticeText.innerText = data.notice_text || '';
+        } else { noticeBox.style.display = 'none'; }
+    }
 
     function initTime() {
         const fill = (id, max, def) => {
-            const s = document.getElementById(id);
+            const s = document.getElementById(id); s.innerHTML = '';
             for(let i=0; i<max; i++) {
                 let v = i.toString().padStart(2, '0');
                 s.add(new Option(v, v, i===def, i===def));
@@ -234,52 +184,49 @@
     }
 
     async function loadLogs() {
-        const { data } = await _sb.from('work_logs').select('*').order('id', { ascending: false }).limit(30);
-        if(data) { allLogs = data; renderLogs(data); }
+        const { data, error } = await _sb.from('work_logs').select('*').order('id', { ascending: false }).limit(500);
+        if(data) { allLogs = data; currentDisplayedLogs = data; renderLogs(data); }
+        if(error) console.error(error);
     }
 
     function renderLogs(data) {
-        const container = document.getElementById('logs');
-        container.innerHTML = '';
+        const container = document.getElementById('logs'); container.innerHTML = '';
         data.forEach(log => {
-            container.insertAdjacentHTML('beforeend', `
-                <div class="log-item">
-                    <div style="font-weight:800; color:var(--primary);">${log.name}</div>
-                    <div style="font-size:14px; margin:5px 0; color:#444;">${log.note || ''}</div>
-                    <div style="font-size:11px; color:#888; font-weight:bold;">📅 ${log.date.split('-').reverse().join('/')} | ⏱ ${log.time_range}</div>
-                </div>`);
+            const displayDate = log.date.split('-').reverse().join('/');
+            const noteContent = log.note && log.note.trim() !== "" ? `<div class="log-note"><strong>Ghi chú:</strong> ${log.note}</div>` : '';
+            container.insertAdjacentHTML('beforeend', `<div class="log-item"><div class="log-name">${log.name}</div>${noteContent}<div class="log-meta"><span class="tag">📅 ${displayDate}</span><span class="tag">⏱ ${log.time_range}</span><span class="tag tag-time">📤 Gửi: ${log.created_at_time || '--:--'}</span></div></div>`);
         });
     }
 
     function filterLogs(el) {
         const val = el.value.toLowerCase();
-        renderLogs(allLogs.filter(l => l.name.toLowerCase().includes(val)));
+        currentDisplayedLogs = allLogs.filter(l => l.name.toLowerCase().includes(val));
+        renderLogs(currentDisplayedLogs);
     }
 
     async function submitData() {
         const btn = document.getElementById('btnSend');
         const name = document.getElementById('name').value.trim();
+        const note = document.getElementById('note').value.trim();
         if (!name) return alert("Vui lòng nhập tên!");
         btn.innerText = "ĐANG GỬI..."; btn.disabled = true;
-
         const timeRange = `${document.getElementById('sh').value}:${document.getElementById('sm').value} - ${document.getElementById('eh').value}:${document.getElementById('em').value}`;
-        
-        await _sb.from('work_logs').insert([{ 
-            name: name, note: document.getElementById('note').value.trim(), 
-            date: document.getElementById('work_date').value, 
-            time_range: timeRange, created_at_time: new Date().toLocaleTimeString('vi-VN')
-        }]);
-
-        btn.innerText = "THÀNH CÔNG!";
-        setTimeout(() => { btn.innerText = "GỬI BÁO CÔNG"; btn.disabled = false; }, 1000);
+        const now = new Date();
+        const timeSent = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+        const { error } = await _sb.from('work_logs').insert([{ name: name, note: note === "" ? null : note, date: document.getElementById('work_date').value, time_range: timeRange, created_at_time: timeSent }]);
+        if(!error) {
+            btn.innerText = "GỬI THÀNH CÔNG!"; initTime();
+            setTimeout(() => { btn.innerText = "XÁC NHẬN GỬI"; btn.disabled = false; }, 1500);
+        } else { alert("Lỗi gửi bài! Kiểm tra RLS Policy trên Supabase."); btn.disabled = false; btn.innerText = "XÁC NHẬN GỬI"; }
     }
 
-    async function exportExcel() {
-        const { data } = await _sb.from('work_logs').select('*').order('id', { ascending: true });
-        const ws = XLSX.utils.json_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "BaoCong");
-        XLSX.writeFile(wb, "BaoCong.xlsx");
+    function exportExcelByFilter() {
+        if (currentDisplayedLogs.length === 0) return alert("Không có dữ liệu!");
+        const sortedData = currentDisplayedLogs.slice().sort((a, b) => a.id - b.id);
+        const filterVal = document.getElementById('filterName').value.trim();
+        const fileName = filterVal ? `BaoCong_${filterVal}.xlsx` : "BaoCong_ChayThu.xlsx";
+        const ws = XLSX.utils.json_to_sheet(sortedData.map(item => ({ "Họ Tên": item.name, "Ngày Làm": item.date, "Khoảng Giờ": item.time_range, "Ghi Chú": item.note || "", "Thời Gian Gửi": item.created_at_time })));
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "BaoCong"); XLSX.writeFile(wb, fileName);
     }
 </script>
 </body>
