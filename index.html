@@ -3,210 +3,312 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Báo Công ChayThu</title>
+    <title>Báo công công ty ABC</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #1a73e8; --shopee: #ee4d2d; --success: #34a853; --gray: #5f6368; }
-        body, html { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background: #f1f3f4; overflow-x: hidden; }
+        body, html { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background: #f1f3f4; color: #202124; }
         
-        .top-banner { background: var(--primary); color: white; text-align: center; padding: 10px; font-weight: 800; font-size: 14px; position: sticky; top: 0; z-index: 100; }
-        .screen { display: none; width: 100%; min-height: 100vh; padding: 20px; box-sizing: border-box; }
+        .top-banner { background: var(--primary); color: white; text-align: center; padding: 12px; font-weight: 800; font-size: 14px; position: sticky; top: 0; z-index: 100; }
+        .screen { display: none; width: 100%; min-height: 100vh; padding: 15px; box-sizing: border-box; max-width: 500px; margin: 0 auto; }
         .screen.active { display: block; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
 
-        /* TRANG CHỦ */
-        #screen-home { background: #ffffff; text-align: center; }
-        .home-content { display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 20px auto; align-items: center; }
+        /* Nút bấm */
+        .btn-main { width: 100%; padding: 16px; border-radius: 12px; font-size: 16px; font-weight: 700; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 12px; text-decoration: none; box-sizing: border-box; }
+        .btn-shopee { background: var(--shopee); color: white; }
+        .btn-work { background: var(--primary); color: white; }
 
-        .btn-main { width: 85%; padding: 18px; border-radius: 15px; font-size: 16px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; border: none; cursor: pointer; }
-        .btn-shopee { background: var(--shopee); color: white; box-shadow: 0 6px 15px rgba(238, 77, 45, 0.2); }
-        .btn-work { background: var(--primary); color: white; box-shadow: 0 6px 15px rgba(26, 115, 232, 0.2); }
+        /* Form báo công */
+        .form-group { margin-bottom: 15px; position: relative; text-align: left; }
+        label { display: block; font-size: 12px; font-weight: bold; color: var(--gray); margin-bottom: 5px; }
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; box-sizing: border-box; background: #fafafa; }
+        .clear-btn { position: absolute; right: 10px; top: 32px; width: 22px; height: 22px; background: #ccc; color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: none; z-index: 5; }
+        
+        .time-row { display: flex; gap: 5px; align-items: center; }
+        .time-box { flex: 1; background: #eee; border-radius: 8px; display: flex; align-items: center; }
+        .time-box select { background: transparent; border: none; padding: 10px 2px; font-weight: bold; text-align: center; }
 
-        /* THÔNG BÁO */
-        .notice-title { width: 85%; text-align: left; font-weight: 800; color: var(--gray); font-size: 13px; margin-top: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-        #admin-notice { display: none; width: 90%; max-width: 400px; margin: 10px auto; background: #fff; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; }
+        /* Thông báo xen kẽ */
+        .notice-box { background: white; border-radius: 15px; overflow: hidden; border: 1px solid #e0e0e0; margin-top: 10px; }
+        .notice-text { padding: 12px; font-size: 14px; white-space: pre-wrap; line-height: 1.5; color: #333; }
         .announcement-img { width: 100%; display: block; cursor: zoom-in; }
-        .text-before, .text-after { padding: 12px 15px; color: #333; font-size: 14px; line-height: 1.5; white-space: pre-wrap; font-weight: 500; }
 
-        /* VIEWER PHÓNG TO & DI CHUYỂN */
-        #image-viewer { 
-            display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.95); touch-action: none; overflow: hidden; align-items: center; justify-content: center;
-        }
-        #full-image { max-width: 100%; max-height: 100%; transform-origin: center; transition: transform 0.1s ease-out; }
-        .close-zoom { position: fixed; top: 20px; right: 20px; color: white; font-size: 40px; font-weight: bold; z-index: 10000; cursor: pointer; text-shadow: 0 0 10px #000; }
+        /* Zoom Ảnh */
+        #image-viewer { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); touch-action: none; align-items: center; justify-content: center; }
+        #full-image { max-width: 100%; max-height: 100%; transform-origin: center; transition: transform 0.1s; }
+        .close-zoom { position: fixed; top: 20px; right: 20px; color: white; font-size: 35px; cursor: pointer; z-index: 10001; background: rgba(0,0,0,0.5); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 
-        /* BÁO CÔNG */
-        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: left; }
-        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #fafafa; margin-top: 5px; }
-        #btnSend { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 15px; }
-        .log-item { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; border-left: 6px solid var(--success); text-align: left; }
+        /* Lịch sử */
+        .log-item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-left: 5px solid var(--success); text-align: left; }
+        .log-name { font-weight: 800; color: var(--primary); font-size: 16px; }
+        .tag { background: #f1f3f4; padding: 3px 8px; border-radius: 5px; font-size: 11px; font-weight: 600; color: var(--gray); margin-right: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="top-banner">CHAYTHU - HỆ THỐNG QUẢN LÝ NỘI BỘ</div>
+<div class="top-banner">BÁO CÔNG CÔNG TY ABC</div>
 
-    <div id="image-viewer">
-        <span class="close-zoom" onclick="closeViewer()">&times;</span>
-        <img id="full-image" src="">
+<div id="image-viewer">
+    <span class="close-zoom" onclick="closeViewer()">&times;</span>
+    <img id="full-image" src="">
+</div>
+
+<div id="screen-home" class="screen active">
+    <div style="text-align: center; padding: 15px 0;">
+        <h2 style="color: var(--success); font-weight: 800; margin: 0;">MENU</h2>
     </div>
+    
+    <a href="https://s.shopee.vn/6VHiHQX7nF" target="_blank" class="btn-main btn-shopee">🛍️ MUA SẮM SHOPEE</a>
+    <button onclick="changeScreen('screen-work')" class="btn-main btn-work">📝 VÀO BÁO CÔNG</button>
 
-    <div id="screen-home" class="screen active">
-        <div class="home-content">
-            <h2 style="color: #202124;">CHAYTHU MENU</h2>
-            <a href="https://s.shopee.vn/6VHiHQX7nF" target="_blank" class="btn-main btn-shopee">🛍️ MUA SẮM SHOPEE</a>
-            <button onclick="changeScreen('screen-work')" class="btn-main btn-work">📝 VÀO BÁO CÔNG</button>
+    <div style="margin-top: 20px;">
+        <span style="font-weight: 800; color: var(--gray); font-size: 12px; margin-left: 10px;">📢 THÔNG BÁO MỚI</span>
+        <div id="notice-content-area" class="notice-box">
+            </div>
+    </div>
+</div>
 
-            <div class="notice-title">📢 THÔNG BÁO</div>
-            <div id="admin-notice">
-                <div class="text-before" id="notice-before"></div>
-                <div id="image-container"></div>
-                <div class="text-after" id="notice-after"></div>
+<div id="screen-work" class="screen">
+    <button onclick="changeScreen('screen-home')" style="background:none; border:none; color:var(--primary); font-weight:bold; cursor:pointer; margin-bottom:15px;">← QUAY LẠI</button>
+    
+    <div class="card">
+        <div class="form-group">
+            <label>HỌ VÀ TÊN</label>
+            <input type="text" id="name" placeholder="Nhập tên..." oninput="saveName(this)">
+        </div>
+        <div class="form-group">
+            <label>NGÀY LÀM VIỆC</label>
+            <input type="date" id="work_date">
+        </div>
+        <div class="form-group">
+            <label>GHI CHÚ (NẾU CÓ)</label>
+            <input type="text" id="note" placeholder="Bạn đã làm gì..." oninput="handleNoteChange(this)">
+            <button class="clear-btn" id="clearNote" onclick="clearNoteInput()">✕</button>
+        </div>
+        <div class="form-group">
+            <label>KHOẢNG THỜI GIAN LÀM</label>
+            <div class="time-row">
+                <div class="time-box"><select id="sh"></select></div><span>:</span>
+                <div class="time-box"><select id="sm"></select></div>
+                <span style="color:#999; margin: 0 5px;">➔</span>
+                <div class="time-box"><select id="eh"></select></div><span>:</span>
+                <div class="time-box"><select id="em"></select></div>
             </div>
         </div>
+        <button onclick="submitData()" id="btnSend" style="width:100%; padding:18px; background:var(--primary); color:white; border:none; border-radius:12px; font-weight:bold; font-size:16px;">GỬI BÁO CÔNG</button>
     </div>
 
-    <div id="screen-work" class="screen">
-        <button onclick="changeScreen('screen-home')" style="margin-bottom:15px;">← QUAY LẠI</button>
-        <div class="card">
-            <label style="font-weight: bold; font-size: 13px; color: var(--gray);">HỌ VÀ TÊN</label>
-            <input type="text" id="name" placeholder="Nhập tên..." oninput="handleNameInput(this)">
-            <br><br>
-            <label style="font-weight: bold; font-size: 13px; color: var(--gray);">GHI CHÚ CÔNG VIỆC</label>
-            <input type="text" id="note" placeholder="Nội dung làm việc..." oninput="localStorage.setItem('ct_note', this.value)">
-            <button onclick="submitData()" id="btnSend">XÁC NHẬN GỬI</button>
-        </div>
-        <div id="logs"></div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-weight:800; font-size:12px; color:var(--gray);">🕒 Lịch sử báo công gần đây</span>
+        <button onclick="exportToExcel()" style="font-size:11px; border:1px solid var(--success); color:var(--success); background:none; padding:5px 10px; border-radius:5px; font-weight:bold;">XUẤT EXCEL</button>
     </div>
+    <input type="text" id="searchName" placeholder="Lọc theo tên..." oninput="renderLogs()" style="margin-bottom:15px;">
+    <div id="logs-container"></div>
+</div>
 
 <script>
     const SB_URL = "https://bcxaekeimoecixovogmm.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjeGFla2VpbW9lY2l4b3ZvZ21tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NzM2NDEsImV4cCI6MjA4NDU0OTY0MX0.lh1C9UUq7Cim1uSK49MOeVJbTKc7L0MOUp-EZM9iehA";
-    const _sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
+    const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    let allLogs = [];
-    let scale = 1, posX = 0, posY = 0;
-    let lastPosX = 0, lastPosY = 0, lastScale = 1;
-    let startX, startY, initialDistance = 0;
-    let isDragging = false;
+    let allLogs = []; // Dùng để hiển thị 50 dòng gần nhất trên web
+    let scale = 1, posX = 0, posY = 0, isDragging = false, startX, startY, initialDist = 0;
 
-    const img = document.getElementById('full-image');
-    const viewer = document.getElementById('image-viewer');
+    window.onload = () => {
+        initTimeDropdowns();
+        document.getElementById('work_date').value = new Date().toLocaleDateString('sv-SE');
+        document.getElementById('name').value = localStorage.getItem('ct_name') || '';
+        const savedNote = localStorage.getItem('ct_note') || '';
+        document.getElementById('note').value = savedNote;
+        if(savedNote) document.getElementById('clearNote').style.display = 'flex';
 
+        loadNotice();
+        loadLogs();
+        initRealtime();
+    };
+
+    function initTimeDropdowns() {
+        const fill = (id, max, def) => {
+            const s = document.getElementById(id);
+            for(let i=0; i<max; i++) {
+                let v = i.toString().padStart(2, '0');
+                s.add(new Option(v, v, i===def, i===def));
+            }
+        };
+        fill('sh', 24, 8); fill('sm', 60, 0); fill('eh', 24, 20); fill('em', 60, 0);
+    }
+
+    async function loadNotice() {
+        const { data } = await _sb.from('settings').select('*').eq('id', 1).single();
+        if (!data || !data.is_active) { document.getElementById('notice-content-area').style.display = 'none'; return; }
+        const container = document.getElementById('notice-content-area');
+        container.innerHTML = '';
+        container.style.display = 'block';
+        const texts = (data.notice_text || "").split('|');
+        const images = (data.notice_image_url || "").split(',');
+        const maxLength = Math.max(texts.length, images.length);
+        for (let i = 0; i < maxLength; i++) {
+            if (texts[i] && texts[i].trim() !== "") {
+                const textDiv = document.createElement('div');
+                textDiv.className = 'notice-text';
+                textDiv.innerText = texts[i].trim();
+                container.appendChild(textDiv);
+            }
+            if (images[i] && images[i].trim() !== "") {
+                const img = document.createElement('img');
+                img.src = images[i].trim();
+                img.className = 'announcement-img';
+                img.onclick = () => openViewer(img.src);
+                container.appendChild(img);
+            }
+        }
+    }
+
+    function saveName(el) {
+        el.value = el.value.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+        localStorage.setItem('ct_name', el.value);
+    }
+    function handleNoteChange(el) {
+        document.getElementById('clearNote').style.display = el.value ? 'flex' : 'none';
+        localStorage.setItem('ct_note', el.value);
+    }
+    function clearNoteInput() {
+        document.getElementById('note').value = '';
+        document.getElementById('clearNote').style.display = 'none';
+        localStorage.setItem('ct_note', '');
+    }
     function changeScreen(s) {
         document.querySelectorAll('.screen').forEach(i => i.classList.remove('active'));
         document.getElementById(s).classList.add('active');
         window.scrollTo(0,0);
     }
 
-    function handleNameInput(el) {
-        el.value = el.value.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
-        localStorage.setItem('ct_user', el.value);
-    }
+    const viewer = document.getElementById('image-viewer');
+    const img = document.getElementById('full-image');
+    function openViewer(url) { img.src = url; scale = 1; posX = 0; posY = 0; updateTransform(); viewer.style.display = 'flex'; }
+    function closeViewer() { viewer.style.display = 'none'; }
+    function updateTransform() { img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
 
-    // --- XỬ LÝ ZOOM & DI CHUYỂN ĐA ĐIỂM ---
-    function openViewer(url) {
-        img.src = url; scale = 1; posX = 0; posY = 0;
-        updateTransform(); viewer.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-
-    function closeViewer() {
-        viewer.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }
-
-    function updateTransform() {
-        if (scale < 1) scale = 1;
-        if (scale > 5) scale = 5;
-        img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
-    }
-
+    viewer.addEventListener('wheel', e => { e.preventDefault(); scale = Math.min(Math.max(1, scale * (e.deltaY > 0 ? 0.9 : 1.1)), 5); updateTransform(); }, {passive:false});
+    viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - posX; startY = e.clientY - posY; });
+    window.addEventListener('mousemove', e => { if(isDragging) { posX = e.clientX - startX; posY = e.clientY - startY; updateTransform(); }});
+    window.addEventListener('mouseup', () => isDragging = false);
     viewer.addEventListener('touchstart', e => {
-        if (e.touches.length === 1) {
-            isDragging = true;
-            startX = e.touches[0].clientX - posX;
-            startY = e.touches[0].clientY - posY;
-        } else if (e.touches.length === 2) {
-            isDragging = false;
-            initialDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-            lastScale = scale;
-        }
+        if(e.touches.length === 1) { isDragging = true; startX = e.touches[0].clientX - posX; startY = e.touches[0].clientY - posY; }
+        else if(e.touches.length === 2) initialDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
     });
-
     viewer.addEventListener('touchmove', e => {
         e.preventDefault();
-        if (e.touches.length === 1 && isDragging) {
-            posX = e.touches[0].clientX - startX;
-            posY = e.touches[0].clientY - startY;
-            updateTransform();
-        } else if (e.touches.length === 2) {
-            const currentDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-            scale = lastScale * (currentDist / initialDistance);
-            updateTransform();
+        if(e.touches.length === 1 && isDragging) { posX = e.touches[0].clientX - startX; posY = e.touches[0].clientY - startY; updateTransform(); }
+        else if(e.touches.length === 2) {
+            const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            scale = Math.min(Math.max(1, scale * (dist / initialDist)), 5);
+            initialDist = dist; updateTransform();
         }
-    }, { passive: false });
-
-    viewer.addEventListener('touchend', () => { isDragging = false; lastScale = scale; });
-
-    // --- SUPABASE & REALTIME ---
-    async function loadNotice() {
-        const { data } = await _sb.from('settings').select('*').eq('id', 1).single();
-        if (!data || !data.is_active) { document.getElementById('admin-notice').style.display = 'none'; return; }
-        
-        document.getElementById('admin-notice').style.display = 'block';
-        const imgContainer = document.getElementById('image-container');
-        imgContainer.innerHTML = '';
-        const textParts = (data.notice_text || "").split('---');
-        document.getElementById('notice-before').innerText = textParts[0]?.trim() || "";
-        document.getElementById('notice-after').innerText = textParts[1]?.trim() || "";
-
-        if (data.notice_image_url) {
-            data.notice_image_url.split(',').forEach(url => {
-                const imgEl = document.createElement('img');
-                imgEl.src = url.trim(); imgEl.className = 'announcement-img';
-                imgEl.onclick = () => openViewer(url.trim());
-                imgContainer.appendChild(imgEl);
-            });
-        }
-    }
+    }, {passive:false});
 
     async function loadLogs() {
-        const { data } = await _sb.from('work_logs').select('*').order('id', { ascending: false }).limit(15);
-        if(data) {
-            const container = document.getElementById('logs');
-            container.innerHTML = '<h3 style="font-size:14px; color:gray;">LỊCH SỬ GẦN ĐÂY</h3>';
-            data.forEach(log => {
-                container.insertAdjacentHTML('beforeend', `<div class="log-item"><b>${log.name}</b><br><small>${log.date} | ${log.time_range}</small><p style="margin:5px 0 0 0; font-size:14px;">${log.note || ''}</p></div>`);
-            });
-        }
+        const { data } = await _sb.from('work_logs').select('*').order('id', {ascending: false}).limit(50);
+        if(data) { allLogs = data; renderLogs(); }
     }
-
-    function initRealtime() {
-        _sb.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => loadNotice())
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_logs' }, () => loadLogs()).subscribe();
+    function renderLogs() {
+        const key = document.getElementById('searchName').value.toLowerCase();
+        const cont = document.getElementById('logs-container'); cont.innerHTML = '';
+        allLogs.filter(l => l.name.toLowerCase().includes(key)).forEach(log => {
+            const noteHtml = log.note ? `<div style="margin-top:8px; font-size:14px; border-top:1px dashed #eee; padding-top:8px;"><strong>Ghi chú:</strong> ${log.note}</div>` : '';
+            cont.insertAdjacentHTML('beforeend', `<div class="log-item"><div class="log-name">${log.name}</div><div class="log-meta"><span class="tag">📅 ${log.date.split('-').reverse().join('/')}</span><span class="tag">⏱️ ${log.time_range}</span><span class="tag" style="background:#e8f5e9; color:var(--success);">📤 Gửi lúc: ${log.created_at_time || '--:--'}</span></div>${noteHtml}</div>`);
+        });
     }
-
-    window.onload = () => {
-        loadNotice(); loadLogs(); initRealtime();
-        document.getElementById('name').value = localStorage.getItem('ct_user') || '';
-        document.getElementById('note').value = localStorage.getItem('ct_note') || '';
-        document.addEventListener("visibilitychange", () => { if (document.visibilityState === 'visible') { loadNotice(); loadLogs(); } });
-    };
 
     async function submitData() {
         const name = document.getElementById('name').value.trim();
-        if (!name) return alert("Nhập tên!");
+        if (!name) return alert("Vui lòng nhập tên!");
         const btn = document.getElementById('btnSend');
         btn.disabled = true; btn.innerText = "ĐANG GỬI...";
+        const tr = `${document.getElementById('sh').value}:${document.getElementById('sm').value} - ${document.getElementById('eh').value}:${document.getElementById('em').value}`;
+        const timeSent = new Date().getHours().toString().padStart(2,'0') + ":" + new Date().getMinutes().toString().padStart(2,'0');
         const { error } = await _sb.from('work_logs').insert([{ 
-            name, note: document.getElementById('note').value || null, 
-            date: new Date().toISOString().split('T')[0], time_range: "08:00 - 20:00"
+            name, note: document.getElementById('note').value.trim() || null, 
+            date: document.getElementById('work_date').value, 
+            time_range: tr, created_at_time: timeSent
         }]);
-        if(!error) { btn.innerText = "THÀNH CÔNG!"; setTimeout(() => { btn.disabled = false; btn.innerText = "XÁC NHẬN GỬI"; }, 2000); }
-        else { alert("Lỗi kết nối!"); btn.disabled = false; }
+        if (!error) {
+            btn.innerText = "GỬI THÀNH CÔNG!";
+            document.getElementById('sh').value = '08'; document.getElementById('sm').value = '00';
+            document.getElementById('eh').value = '20'; document.getElementById('em').value = '00';
+            setTimeout(() => { btn.disabled = false; btn.innerText = "GỬI BÁO CÔNG"; }, 1500);
+            loadLogs();
+        } else { alert("Lỗi!"); btn.disabled = false; }
     }
+
+    function initRealtime() {
+        _sb.channel('db').on('postgres_changes', {event:'*', schema:'public', table:'work_logs'}, loadLogs)
+        .on('postgres_changes', {event:'*', schema:'public', table:'settings'}, loadNotice).subscribe();
+    }
+
+    // --- HÀM XUẤT EXCEL TỐI ƯU: LẤY TẤT CẢ DỮ LIỆU ---
+   async function exportToExcel() {
+    const btn = event.target;
+    const originalText = btn.innerText;
+    // Lấy tên cần lọc từ ô input
+    const searchKey = document.getElementById('searchName').value.trim().toLowerCase();
+    
+    btn.innerText = "ĐANG XUẤT...";
+    btn.disabled = true;
+
+    // 1. Truy vấn dữ liệu từ Supabase
+    // .order('date', {ascending: true}) sẽ đưa ngày cũ nhất lên đầu file Excel
+    let query = _sb.from('work_logs')
+                  .select('*')
+                  .order('date', {ascending: true}) 
+                  .order('created_at_time', {ascending: true}); // Sắp xếp thêm theo giờ gửi nếu cùng ngày
+    
+    // Nếu có gõ tên vào ô lọc thì mới lọc, không thì lấy tất cả
+    if (searchKey !== "") {
+        query = query.ilike('name', `%${searchKey}%`);
+    }
+
+    const { data, error } = await query;
+
+    if (error || !data || data.length === 0) {
+        alert("Không có dữ liệu để xuất!");
+        btn.innerText = originalText;
+        btn.disabled = false;
+        return;
+    }
+
+    // 2. Định dạng lại dữ liệu cho file Excel
+    const excelData = data.map(l => ({
+        "Họ và Tên": l.name,
+        "Ngày Làm Việc": l.date.split('-').reverse().join('/'), // Chuyển YYYY-MM-DD thành DD/MM/YYYY
+        "Khoảng Giờ": l.time_range,
+        "Ghi Chú": l.note || "",
+        "Giờ Ghi Nhận": l.created_at_time || ""
+    }));
+
+    // 3. Tiến hành tạo file Excel
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Báo Công");
+
+    // Tự động chỉnh độ rộng cột cho dễ nhìn
+    ws['!cols'] = [
+        {wch: 20}, // Tên
+        {wch: 15}, // Ngày
+        {wch: 20}, // Khoảng giờ
+        {wch: 40}, // Ghi chú (cột này rộng nhất)
+        {wch: 15}  // Giờ hệ thống
+    ];
+
+    // Đặt tên file (Nếu có lọc tên thì kèm tên người đó vào file)
+    const nameLabel = searchKey !== "" ? `_${searchKey.toUpperCase()}` : "_TAT_CA";
+    XLSX.writeFile(wb, `BaoCong${nameLabel}_TuCuDenMoi.xlsx`);
+    
+    btn.innerText = originalText;
+    btn.disabled = false;
+}
 </script>
 </body>
 </html>
