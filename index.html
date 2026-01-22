@@ -109,35 +109,34 @@
 </div>
 
 <script>
-    const _0xox1 = "b2MuZXNhYmFwdXMuZ21tdm92b3hpY2VvbWlla2VheGNiLy86c3B0dGg=";
-const _0xox2 = "QWhlaTlNWkV1LVBVME9MMHRLSmJWWU9NOWNLeU1SOW1pQzdxcVVVOWgxTC4xeDQ5NDU0ODAyOnB4ZSwxNDYzNzY4NjcxOnRhaSwibm9uYSI6ZWxvciwibW1nb3ZveGljZW9taWVrZWF4Y2IiOnZlciwic2FidXBhcnVzIjpzc2ksInRXSjpwWXQsIjY1MlNIIjpsZ2xhfS5leUo=";
-
-// Hàm giải mã để lấy lại giá trị gốc khi chạy ứng dụng
-const decodeSecret = (s) => atob(s).split("").reverse().join("");
-
-const SB_URL = decodeSecret(_0xox1);
-const SB_KEY = decodeSecret(_0xox2);
+    // 1. Thông tin kết nối
+    const _parts = {
+        u1: "https://bcxaekeimo", u2: "ecixovogmm.sup", u3: "abase.co",
+        k1: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+        k2: "eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjeGFla2VpbW9lY2l4b3ZvZ21tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NzM2NDEsImV4cCI6MjA4NDU0OTY0MX0",
+        k3: "lh1C9UUq7Cim1uSK49MOeVJbTKc7L0MOUp-EZM9iehA"
+    };
+    const SB_URL = _parts.u1 + _parts.u2 + _parts.u3;
+    const SB_KEY = _parts.k1 + "." + _parts.k2 + "." + _parts.k3;
     const _sb = supabase.createClient(SB_URL, SB_KEY);
 
-    let allLogs = []; // Dùng để hiển thị 50 dòng gần nhất trên web
-    let scale = 1, posX = 0, posY = 0, isDragging = false, startX, startY, initialDist = 0;
+    let allLogs = []; 
+    let scale = 1, posX = 0, posY = 0, isDragging = false, startX, startY, lastDist = 0;
 
     window.onload = () => {
         initTimeDropdowns();
-        document.getElementById('work_date').value = new Date().toLocaleDateString('sv-SE');
+        document.getElementById('work_date').value = new Date().toISOString().split('T')[0];
         document.getElementById('name').value = localStorage.getItem('ct_name') || '';
         const savedNote = localStorage.getItem('ct_note') || '';
         document.getElementById('note').value = savedNote;
         if(savedNote) document.getElementById('clearNote').style.display = 'flex';
-
-        loadNotice();
-        loadLogs();
-        initRealtime();
+        loadNotice(); loadLogs(); initRealtime();
     };
 
     function initTimeDropdowns() {
         const fill = (id, max, def) => {
             const s = document.getElementById(id);
+            s.innerHTML = '';
             for(let i=0; i<max; i++) {
                 let v = i.toString().padStart(2, '0');
                 s.add(new Option(v, v, i===def, i===def));
@@ -146,107 +145,143 @@ const SB_KEY = decodeSecret(_0xox2);
         fill('sh', 24, 8); fill('sm', 60, 0); fill('eh', 24, 20); fill('em', 60, 0);
     }
 
-    async function loadNotice() {
-        const { data } = await _sb.from('settings').select('*').eq('id', 1).single();
-        if (!data || !data.is_active) { document.getElementById('notice-content-area').style.display = 'none'; return; }
-        const container = document.getElementById('notice-content-area');
-        container.innerHTML = '';
-        container.style.display = 'block';
-        const texts = (data.notice_text || "").split('|');
-        const images = (data.notice_image_url || "").split(',');
-        const maxLength = Math.max(texts.length, images.length);
-        for (let i = 0; i < maxLength; i++) {
-            if (texts[i] && texts[i].trim() !== "") {
-                const textDiv = document.createElement('div');
-                textDiv.className = 'notice-text';
-                textDiv.innerText = texts[i].trim();
-                container.appendChild(textDiv);
-            }
-            if (images[i] && images[i].trim() !== "") {
-                const img = document.createElement('img');
-                img.src = images[i].trim();
-                img.className = 'announcement-img';
-                img.onclick = () => openViewer(img.src);
-                container.appendChild(img);
-            }
-        }
-    }
-
-    function saveName(el) {
-        el.value = el.value.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
-        localStorage.setItem('ct_name', el.value);
-    }
-    function handleNoteChange(el) {
-        document.getElementById('clearNote').style.display = el.value ? 'flex' : 'none';
-        localStorage.setItem('ct_note', el.value);
-    }
-    function clearNoteInput() {
-        document.getElementById('note').value = '';
-        document.getElementById('clearNote').style.display = 'none';
-        localStorage.setItem('ct_note', '');
-    }
-    function changeScreen(s) {
-        document.querySelectorAll('.screen').forEach(i => i.classList.remove('active'));
-        document.getElementById(s).classList.add('active');
-        window.scrollTo(0,0);
-    }
-
+    // --- HỆ THỐNG ZOOM & DI CHUYỂN (PC & MOBILE) ---
     const viewer = document.getElementById('image-viewer');
-    const img = document.getElementById('full-image');
-    function openViewer(url) { img.src = url; scale = 1; posX = 0; posY = 0; updateTransform(); viewer.style.display = 'flex'; }
+    const fullImg = document.getElementById('full-image');
+
+    function updateTransform() {
+        fullImg.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
+    }
+
+    function openViewer(url) {
+        fullImg.src = url;
+        scale = 1; posX = 0; posY = 0;
+        updateTransform();
+        viewer.style.display = 'flex';
+    }
+
     function closeViewer() { viewer.style.display = 'none'; }
-    function updateTransform() { img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`; }
 
-    viewer.addEventListener('wheel', e => { e.preventDefault(); scale = Math.min(Math.max(1, scale * (e.deltaY > 0 ? 0.9 : 1.1)), 5); updateTransform(); }, {passive:false});
-    viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - posX; startY = e.clientY - posY; });
-    window.addEventListener('mousemove', e => { if(isDragging) { posX = e.clientX - startX; posY = e.clientY - startY; updateTransform(); }});
-    window.addEventListener('mouseup', () => isDragging = false);
-    viewer.addEventListener('touchstart', e => {
-        if(e.touches.length === 1) { isDragging = true; startX = e.touches[0].clientX - posX; startY = e.touches[0].clientY - posY; }
-        else if(e.touches.length === 2) initialDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-    });
-    viewer.addEventListener('touchmove', e => {
+    // 1. Zoom bằng con lăn chuột (Máy tính)
+    viewer.addEventListener('wheel', (e) => {
         e.preventDefault();
-        if(e.touches.length === 1 && isDragging) { posX = e.touches[0].clientX - startX; posY = e.touches[0].clientY - startY; updateTransform(); }
-        else if(e.touches.length === 2) {
-            const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-            scale = Math.min(Math.max(1, scale * (dist / initialDist)), 5);
-            initialDist = dist; updateTransform();
+        const delta = e.deltaY > 0 ? -0.2 : 0.2;
+        scale = Math.min(Math.max(1, scale + delta), 5);
+        updateTransform();
+    }, { passive: false });
+
+    // 2. Di chuyển bằng chuột (Máy tính)
+    viewer.onmousedown = (e) => {
+        isDragging = true;
+        startX = e.clientX - posX;
+        startY = e.clientY - posY;
+        viewer.style.cursor = 'grabbing';
+    };
+    window.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+            posX = e.clientX - startX;
+            posY = e.clientY - startY;
+            updateTransform();
         }
-    }, {passive:false});
+    });
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+        viewer.style.cursor = 'default';
+    });
 
-    async function loadLogs() {
-        const { data } = await _sb.from('work_logs').select('*').order('id', {ascending: false}).limit(50);
-        if(data) { allLogs = data; renderLogs(); }
-    }
-    function renderLogs() {
-        const key = document.getElementById('searchName').value.toLowerCase();
-        const cont = document.getElementById('logs-container'); cont.innerHTML = '';
-        allLogs.filter(l => l.name.toLowerCase().includes(key)).forEach(log => {
-            const noteHtml = log.note ? `<div style="margin-top:8px; font-size:14px; border-top:1px dashed #eee; padding-top:8px;"><strong>Ghi chú:</strong> ${log.note}</div>` : '';
-            cont.insertAdjacentHTML('beforeend', `<div class="log-item"><div class="log-name">${log.name}</div><div class="log-meta"><span class="tag">📅 ${log.date.split('-').reverse().join('/')}</span><span class="tag">⏱️ ${log.time_range}</span><span class="tag" style="background:#e8f5e9; color:var(--success);">📤 Gửi lúc: ${log.created_at_time || '--:--'}</span></div>${noteHtml}</div>`);
-        });
-    }
+    // 3. Zoom & Di chuyển bằng cảm ứng (Điện thoại)
+    viewer.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+            isDragging = true;
+            startX = e.touches[0].clientX - posX;
+            startY = e.touches[0].clientY - posY;
+        } else if (e.touches.length === 2) {
+            lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        }
+    }, { passive: false });
 
+    viewer.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (e.touches.length === 1 && isDragging) {
+            posX = e.touches[0].clientX - startX;
+            posY = e.touches[0].clientY - startY;
+        } else if (e.touches.length === 2) {
+            const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            if (lastDist > 0) {
+                scale *= (dist / lastDist);
+                scale = Math.min(Math.max(1, scale), 5);
+            }
+            lastDist = dist;
+        }
+        updateTransform();
+    }, { passive: false });
+
+    viewer.addEventListener('touchend', () => { isDragging = false; lastDist = 0; });
+
+    // --- GỬI DỮ LIỆU & RESET GIỜ ---
     async function submitData() {
         const name = document.getElementById('name').value.trim();
         if (!name) return alert("Vui lòng nhập tên!");
         const btn = document.getElementById('btnSend');
         btn.disabled = true; btn.innerText = "ĐANG GỬI...";
+
         const tr = `${document.getElementById('sh').value}:${document.getElementById('sm').value} - ${document.getElementById('eh').value}:${document.getElementById('em').value}`;
-        const timeSent = new Date().getHours().toString().padStart(2,'0') + ":" + new Date().getMinutes().toString().padStart(2,'0');
+        const now = new Date();
+        const timeSent = String(now.getHours()).padStart(2,'0') + ":" + String(now.getMinutes()).padStart(2,'0');
+
         const { error } = await _sb.from('work_logs').insert([{ 
             name, note: document.getElementById('note').value.trim() || null, 
             date: document.getElementById('work_date').value, 
             time_range: tr, created_at_time: timeSent
         }]);
+
         if (!error) {
             btn.innerText = "GỬI THÀNH CÔNG!";
-            document.getElementById('sh').value = '08'; document.getElementById('sm').value = '00';
-            document.getElementById('eh').value = '20'; document.getElementById('em').value = '00';
+            // Reset giờ về mặc định
+            document.getElementById('sh').value = '08';
+            document.getElementById('sm').value = '00';
+            document.getElementById('eh').value = '20';
+            document.getElementById('em').value = '00';
+            
             setTimeout(() => { btn.disabled = false; btn.innerText = "GỬI BÁO CÔNG"; }, 1500);
             loadLogs();
-        } else { alert("Lỗi!"); btn.disabled = false; }
+        } else { 
+            alert("Lỗi kết nối database!"); 
+            btn.disabled = false; btn.innerText = "GỬI LẠI";
+        }
+    }
+
+    // --- CÁC HÀM CÒN LẠI GIỮ NGUYÊN ---
+    async function loadNotice() {
+        const { data } = await _sb.from('settings').select('*').eq('id', 1).single();
+        if (!data || !data.is_active) { document.getElementById('notice-content-area').style.display = 'none'; return; }
+        const container = document.getElementById('notice-content-area');
+        container.innerHTML = ''; container.style.display = 'block';
+        const texts = (data.notice_text || "").split('|');
+        const images = (data.notice_image_url || "").split(',');
+        const maxLength = Math.max(texts.length, images.length);
+        for (let i = 0; i < maxLength; i++) {
+            if (texts[i]?.trim()) {
+                const d = document.createElement('div'); d.className = 'notice-text'; d.innerText = texts[i].trim(); container.appendChild(d);
+            }
+            if (images[i]?.trim()) {
+                const img = document.createElement('img'); img.src = images[i].trim(); img.className = 'announcement-img'; img.onclick = () => openViewer(img.src); container.appendChild(img);
+            }
+        }
+    }
+
+    async function loadLogs() {
+        const { data } = await _sb.from('work_logs').select('*').order('id', {ascending: false}).limit(50);
+        if(data) { allLogs = data; renderLogs(); }
+    }
+
+    function renderLogs() {
+        const key = document.getElementById('searchName').value.toLowerCase();
+        const cont = document.getElementById('logs-container'); cont.innerHTML = '';
+        allLogs.filter(l => l.name.toLowerCase().includes(key)).forEach(log => {
+            const noteHtml = log.note ? `<div style="margin-top:8px; font-size:14px; border-top:1px dashed #eee; padding-top:8px;"><strong>Ghi chú:</strong> ${log.note}</div>` : '';
+            cont.insertAdjacentHTML('beforeend', `<div class="log-item"><div class="log-name">${log.name}</div><div class="log-meta"><span class="tag">📅 ${log.date.split('-').reverse().join('/')}</span><span class="tag">⏱️ ${log.time_range}</span><span class="tag" style="background:#e8f5e9; color:var(--success);">📤 Gửi: ${log.created_at_time || '--:--'}</span></div>${noteHtml}</div>`);
+        });
     }
 
     function initRealtime() {
@@ -254,67 +289,23 @@ const SB_KEY = decodeSecret(_0xox2);
         .on('postgres_changes', {event:'*', schema:'public', table:'settings'}, loadNotice).subscribe();
     }
 
-    // --- HÀM XUẤT EXCEL TỐI ƯU: LẤY TẤT CẢ DỮ LIỆU ---
-   async function exportToExcel() {
-    const btn = event.target;
-    const originalText = btn.innerText;
-    // Lấy tên cần lọc từ ô input
-    const searchKey = document.getElementById('searchName').value.trim().toLowerCase();
-    
-    btn.innerText = "ĐANG XUẤT...";
-    btn.disabled = true;
+    function saveName(el) { el.value = el.value.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase()); localStorage.setItem('ct_name', el.value); }
+    function handleNoteChange(el) { document.getElementById('clearNote').style.display = el.value ? 'flex' : 'none'; localStorage.setItem('ct_note', el.value); }
+    function clearNoteInput() { document.getElementById('note').value = ''; document.getElementById('clearNote').style.display = 'none'; localStorage.setItem('ct_note', ''); }
+    function changeScreen(s) { document.querySelectorAll('.screen').forEach(i => i.classList.remove('active')); document.getElementById(s).classList.add('active'); window.scrollTo(0,0); }
 
-    // 1. Truy vấn dữ liệu từ Supabase
-    // .order('date', {ascending: true}) sẽ đưa ngày cũ nhất lên đầu file Excel
-    let query = _sb.from('work_logs')
-                  .select('*')
-                  .order('date', {ascending: true}) 
-                  .order('created_at_time', {ascending: true}); // Sắp xếp thêm theo giờ gửi nếu cùng ngày
-    
-    // Nếu có gõ tên vào ô lọc thì mới lọc, không thì lấy tất cả
-    if (searchKey !== "") {
-        query = query.ilike('name', `%${searchKey}%`);
+    async function exportToExcel() {
+        const btn = event.target; const searchKey = document.getElementById('searchName').value.trim().toLowerCase();
+        btn.innerText = "ĐANG XUẤT..."; btn.disabled = true;
+        let query = _sb.from('work_logs').select('*').order('date', {ascending: true});
+        if (searchKey !== "") query = query.ilike('name', `%${searchKey}%`);
+        const { data } = await query;
+        if (!data || data.length === 0) { alert("Không có dữ liệu!"); btn.innerText = "XUẤT EXCEL"; btn.disabled = false; return; }
+        const excelData = data.map(l => ({ "Họ và Tên": l.name, "Ngày Làm Việc": l.date.split('-').reverse().join('/'), "Khoảng Giờ": l.time_range, "Ghi Chú": l.note || "", "Giờ Hệ Thống": l.created_at_time || "" }));
+        const ws = XLSX.utils.json_to_sheet(excelData); const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Báo Công"); XLSX.writeFile(wb, `BaoCong_${searchKey || 'TatCa'}.xlsx`);
+        btn.innerText = "XUẤT EXCEL"; btn.disabled = false;
     }
-
-    const { data, error } = await query;
-
-    if (error || !data || data.length === 0) {
-        alert("Không có dữ liệu để xuất!");
-        btn.innerText = originalText;
-        btn.disabled = false;
-        return;
-    }
-
-    // 2. Định dạng lại dữ liệu cho file Excel
-    const excelData = data.map(l => ({
-        "Họ và Tên": l.name,
-        "Ngày Làm Việc": l.date.split('-').reverse().join('/'), // Chuyển YYYY-MM-DD thành DD/MM/YYYY
-        "Khoảng Giờ": l.time_range,
-        "Ghi Chú": l.note || "",
-        "Giờ Ghi Nhận": l.created_at_time || ""
-    }));
-
-    // 3. Tiến hành tạo file Excel
-    const ws = XLSX.utils.json_to_sheet(excelData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Báo Công");
-
-    // Tự động chỉnh độ rộng cột cho dễ nhìn
-    ws['!cols'] = [
-        {wch: 20}, // Tên
-        {wch: 15}, // Ngày
-        {wch: 20}, // Khoảng giờ
-        {wch: 40}, // Ghi chú (cột này rộng nhất)
-        {wch: 15}  // Giờ hệ thống
-    ];
-
-    // Đặt tên file (Nếu có lọc tên thì kèm tên người đó vào file)
-    const nameLabel = searchKey !== "" ? `_${searchKey.toUpperCase()}` : "_TAT_CA";
-    XLSX.writeFile(wb, `BaoCong${nameLabel}_TuCuDenMoi.xlsx`);
-    
-    btn.innerText = originalText;
-    btn.disabled = false;
-}
 </script>
 </body>
 </html>
