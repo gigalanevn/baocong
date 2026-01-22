@@ -10,22 +10,31 @@
         :root { --primary: #1a73e8; --shopee: #ee4d2d; --success: #34a853; --gray: #5f6368; }
         body, html { height: 100%; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f1f3f4; overflow-x: hidden; }
         
-        /* DÒNG TIÊU ĐỀ TRÊN CÙNG */
-        .top-banner { background: var(--primary); color: white; text-align: center; padding: 10px; font-weight: 800; font-size: 14px; letter-spacing: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-
+        .top-banner { background: var(--primary); color: white; text-align: center; padding: 10px; font-weight: 800; font-size: 14px; letter-spacing: 1px; position: sticky; top: 0; z-index: 100; }
         .screen { display: none; width: 100%; min-height: 100vh; box-sizing: border-box; padding: 20px; }
         .screen.active { display: block; }
-
-        /* THÔNG BÁO QUẢN TRỊ */
-        #admin-notice { display: none; width: 100%; max-width: 400px; margin: 0 auto 20px auto; background: #fff; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; }
-        .announcement-img { width: 100%; display: block; object-fit: cover; border-bottom: 1px solid #f1f1f1; }
-        .announcement-text { padding: 12px 15px; color: #333; font-size: 14px; font-weight: 500; line-height: 1.5; white-space: pre-wrap; }
 
         /* TRANG CHỦ */
         #screen-home { background: #ffffff; text-align: center; }
         .home-content { display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 20px auto; align-items: center; }
-        .btn-shopee-large { width: 100%; background: var(--shopee); color: white; text-decoration: none; padding: 45px 20px; border-radius: 25px; font-size: 22px; font-weight: 900; display: flex; flex-direction: column; align-items: center; box-shadow: 0 12px 25px rgba(238, 77, 45, 0.25); box-sizing: border-box; }
-        .btn-work-mid { width: 85%; background: var(--primary); color: white; border: none; padding: 25px 20px; border-radius: 20px; font-size: 16px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 8px 20px rgba(26, 115, 232, 0.2); }
+
+        .btn-main { width: 85%; padding: 20px; border-radius: 15px; font-size: 16px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; border: none; cursor: pointer; }
+        .btn-shopee { background: var(--shopee); color: white; box-shadow: 0 6px 15px rgba(238, 77, 45, 0.2); }
+        .btn-work { background: var(--primary); color: white; box-shadow: 0 6px 15px rgba(26, 115, 232, 0.2); }
+
+        /* TIÊU ĐỀ THÔNG BÁO */
+        .notice-title { width: 85%; text-align: left; font-weight: 800; color: var(--gray); font-size: 13px; margin-top: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+
+        /* KHỐI THÔNG BÁO */
+        #admin-notice { display: none; width: 90%; max-width: 400px; margin: 10px auto; background: #fff; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; }
+        .announcement-img { width: 100%; display: block; object-fit: cover; cursor: zoom-in; }
+        .text-before, .text-after { padding: 12px 15px; color: #333; font-size: 14px; font-weight: 500; line-height: 1.5; white-space: pre-wrap; }
+        .text-before { border-bottom: 1px solid #f9f9f9; }
+        .text-after { border-top: 1px solid #f9f9f9; }
+
+        /* ZOOM ẢNH */
+        #image-viewer { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; cursor: zoom-out; }
+        #image-viewer img { max-width: 95%; max-height: 95%; border-radius: 5px; }
 
         /* BÁO CÔNG */
         .header { display: flex; align-items: center; margin-bottom: 20px; }
@@ -53,20 +62,21 @@
 
     <div class="top-banner">CHAYTHU - HỆ THỐNG QUẢN LÝ NỘI BỘ</div>
 
+    <div id="image-viewer" onclick="this.style.display='none'"><img id="full-image" src=""></div>
+
     <div id="screen-home" class="screen active">
         <div class="home-content">
             <h2 style="color: #202124; margin-bottom: 10px;">CHAYTHU MENU</h2>
-            
-            <div id="admin-notice">
-                <div class="announcement-text" id="notice-text"></div>
-            </div>
+            <a href="https://s.shopee.vn/6VHiHQX7nF" target="_blank" class="btn-main btn-shopee"><span>🛍️</span> MUA SẮM SHOPEE</a>
+            <button onclick="changeScreen('screen-work')" class="btn-main btn-work"><span>📝</span> VÀO BÁO CÔNG</button>
 
-            <a href="https://s.shopee.vn/6VHiHQX7nF" target="_blank" class="btn-shopee-large">
-                <span style="font-size: 45px; margin-bottom: 10px;">🛍️</span> MUA SẮM SHOPEE
-            </a>
-            <button onclick="changeScreen('screen-work')" class="btn-work-mid">
-                <span style="font-size: 20px;">📝</span> VÀO BÁO CÔNG
-            </button>
+            <div class="notice-title">📢 THÔNG BÁO</div>
+
+            <div id="admin-notice">
+                <div class="text-before" id="notice-before"></div>
+                <div id="image-container"></div>
+                <div class="text-after" id="notice-after"></div>
+            </div>
         </div>
     </div>
 
@@ -114,12 +124,13 @@
     const SB_URL = "https://bcxaekeimoecixovogmm.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjeGFla2VpbW9lY2l4b3ZvZ21tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NzM2NDEsImV4cCI6MjA4NDU0OTY0MX0.lh1C9UUq7Cim1uSK49MOeVJbTKc7L0MOUp-EZM9iehA";
     
-    // CẤU HÌNH AUTH ĐỂ KHÔNG BỊ EDGE CHẶN
-    const _sb = supabase.createClient(SB_URL, SB_KEY, {
-        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    // Cấu hình không lưu session để tránh lỗi Storage của trình duyệt
+    const _sb = supabase.createClient(SB_URL, SB_KEY, { 
+        auth: { persistSession: false } 
     });
 
-    let allLogs = []; let currentDisplayedLogs = [];
+    let allLogs = [];
+    let realtimeChannel = null;
 
     function changeScreen(screenId) {
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -133,43 +144,82 @@
     function toggleClearBtn(val) { document.getElementById('clearNote').style.display = (val && val.length > 0) ? 'flex' : 'none'; }
     function clearNoteInput() { const input = document.getElementById('note'); input.value = ""; localStorage.setItem('ct_note', ""); toggleClearBtn(""); input.focus(); }
 
-    window.onload = () => {
-        initTime(); loadNotice(); loadLogs();
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('work_date').value = today;
-        document.getElementById('name').value = localStorage.getItem('ct_user') || '';
-        const savedNote = localStorage.getItem('ct_note') || '';
-        document.getElementById('note').value = savedNote; toggleClearBtn(savedNote);
+    // HÀM KHỞI TẠO REALTIME CÓ CHẾ ĐỘ TỰ KẾT NỐI LẠI
+    function initRealtime() {
+        if (realtimeChannel) {
+            _sb.removeChannel(realtimeChannel);
+        }
 
-        // REALTIME KẾT NỐI
-        _sb.channel('db-settings').on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => loadNotice()).subscribe((s) => console.log('Notice Status:', s));
-        _sb.channel('db-logs').on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_logs' }, () => loadLogs()).subscribe((s) => console.log('Logs Status:', s));
+        realtimeChannel = _sb.channel('db-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => {
+                console.log('Realtime: Settings updated');
+                loadNotice();
+            })
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_logs' }, () => {
+                console.log('Realtime: New log inserted');
+                loadLogs();
+            })
+            .subscribe((status) => {
+                console.log('Realtime Status:', status);
+                // Nếu bị ngắt kết nối, tự động thử lại sau 5 giây
+                if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+                    setTimeout(initRealtime, 5000);
+                }
+            });
+    }
+
+    window.onload = () => {
+        initTime(); 
+        loadNotice(); 
+        loadLogs();
+        initRealtime(); // Bật bộ lính gác Realtime
+
+        document.getElementById('work_date').value = new Date().toISOString().split('T')[0];
+        document.getElementById('name').value = localStorage.getItem('ct_user') || '';
+        document.getElementById('note').value = localStorage.getItem('ct_note') || '';
+        
+        // Khi người dùng quay lại tab sau khi để ẩn, ép web tải lại dữ liệu mới nhất
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === 'visible') {
+                loadNotice();
+                loadLogs();
+            }
+        });
     };
 
     async function loadNotice() {
-        const { data } = await _sb.from('settings').select('*').eq('id', 1).single();
-        const noticeBox = document.getElementById('admin-notice');
-        const noticeText = document.getElementById('notice-text');
-        
-        // Xóa sạch ảnh cũ
-        const oldImgs = noticeBox.querySelectorAll('.announcement-img');
-        oldImgs.forEach(img => img.remove());
+        try {
+            const { data } = await _sb.from('settings').select('*').eq('id', 1).single();
+            if (!data || !data.is_active) { 
+                document.getElementById('admin-notice').style.display = 'none'; 
+                return; 
+            }
 
-        if (data && data.is_active) {
-            noticeBox.style.display = 'block';
+            document.getElementById('admin-notice').style.display = 'block';
+            const imgContainer = document.getElementById('image-container');
+            imgContainer.innerHTML = '';
+
+            const textParts = (data.notice_text || "").split('---');
+            document.getElementById('notice-before').innerText = textParts[0].trim();
+            document.getElementById('notice-before').style.display = textParts[0] ? 'block' : 'none';
+            document.getElementById('notice-after').innerText = textParts[1] ? textParts[1].trim() : "";
+            document.getElementById('notice-after').style.display = textParts[1] ? 'block' : 'none';
+
             if (data.notice_image_url) {
-                const links = data.notice_image_url.split(',');
-                links.reverse().forEach(link => { // reverse để ảnh đầu tiên nằm trên cùng
+                data.notice_image_url.split(',').forEach(link => {
                     const url = link.trim();
-                    if(url) {
-                        const img = document.createElement('img');
-                        img.src = url; img.className = 'announcement-img';
-                        noticeBox.insertBefore(img, noticeBox.firstChild);
-                    }
+                    if(!url) return;
+                    const img = document.createElement('img');
+                    img.src = url; 
+                    img.className = 'announcement-img';
+                    img.onclick = () => { 
+                        document.getElementById('full-image').src = url; 
+                        document.getElementById('image-viewer').style.display = 'flex'; 
+                    };
+                    imgContainer.appendChild(img);
                 });
             }
-            noticeText.innerText = data.notice_text || '';
-        } else { noticeBox.style.display = 'none'; }
+        } catch (e) { console.error('Lỗi tải thông báo:', e); }
     }
 
     function initTime() {
@@ -184,49 +234,55 @@
     }
 
     async function loadLogs() {
-        const { data, error } = await _sb.from('work_logs').select('*').order('id', { ascending: false }).limit(500);
-        if(data) { allLogs = data; currentDisplayedLogs = data; renderLogs(data); }
-        if(error) console.error(error);
+        const { data } = await _sb.from('work_logs').select('*').order('id', { ascending: false }).limit(500);
+        if(data) { allLogs = data; renderLogs(data); }
     }
 
     function renderLogs(data) {
-        const container = document.getElementById('logs'); container.innerHTML = '';
+        const container = document.getElementById('logs'); 
+        container.innerHTML = '';
         data.forEach(log => {
             const displayDate = log.date.split('-').reverse().join('/');
-            const noteContent = log.note && log.note.trim() !== "" ? `<div class="log-note"><strong>Ghi chú:</strong> ${log.note}</div>` : '';
+            const noteContent = log.note ? `<div class="log-note"><strong>Ghi chú:</strong> ${log.note}</div>` : '';
             container.insertAdjacentHTML('beforeend', `<div class="log-item"><div class="log-name">${log.name}</div>${noteContent}<div class="log-meta"><span class="tag">📅 ${displayDate}</span><span class="tag">⏱ ${log.time_range}</span><span class="tag tag-time">📤 Gửi: ${log.created_at_time || '--:--'}</span></div></div>`);
         });
     }
 
-    function filterLogs(el) {
-        const val = el.value.toLowerCase();
-        currentDisplayedLogs = allLogs.filter(l => l.name.toLowerCase().includes(val));
-        renderLogs(currentDisplayedLogs);
-    }
+    function filterLogs(el) { renderLogs(allLogs.filter(l => l.name.toLowerCase().includes(el.value.toLowerCase()))); }
 
     async function submitData() {
         const btn = document.getElementById('btnSend');
         const name = document.getElementById('name').value.trim();
-        const note = document.getElementById('note').value.trim();
         if (!name) return alert("Vui lòng nhập tên!");
+        
         btn.innerText = "ĐANG GỬI..."; btn.disabled = true;
         const timeRange = `${document.getElementById('sh').value}:${document.getElementById('sm').value} - ${document.getElementById('eh').value}:${document.getElementById('em').value}`;
-        const now = new Date();
-        const timeSent = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-        const { error } = await _sb.from('work_logs').insert([{ name: name, note: note === "" ? null : note, date: document.getElementById('work_date').value, time_range: timeRange, created_at_time: timeSent }]);
-        if(!error) {
-            btn.innerText = "GỬI THÀNH CÔNG!"; initTime();
-            setTimeout(() => { btn.innerText = "XÁC NHẬN GỬI"; btn.disabled = false; }, 1500);
-        } else { alert("Lỗi gửi bài! Kiểm tra RLS Policy trên Supabase."); btn.disabled = false; btn.innerText = "XÁC NHẬN GỬI"; }
+        const timeSent = new Date().getHours().toString().padStart(2,'0') + ":" + new Date().getMinutes().toString().padStart(2,'0');
+        
+        const { error } = await _sb.from('work_logs').insert([{ 
+            name, 
+            note: document.getElementById('note').value.trim() || null, 
+            date: document.getElementById('work_date').value, 
+            time_range: timeRange, 
+            created_at_time: timeSent 
+        }]);
+
+        if(!error) { 
+            btn.innerText = "GỬI THÀNH CÔNG!"; 
+            initTime(); 
+            setTimeout(() => { btn.innerText = "XÁC NHẬN GỬI"; btn.disabled = false; }, 1500); 
+        } else { 
+            alert("Lỗi gửi!"); 
+            btn.disabled = false; 
+            btn.innerText = "XÁC NHẬN GỬI"; 
+        }
     }
 
     function exportExcelByFilter() {
-        if (currentDisplayedLogs.length === 0) return alert("Không có dữ liệu!");
-        const sortedData = currentDisplayedLogs.slice().sort((a, b) => a.id - b.id);
-        const filterVal = document.getElementById('filterName').value.trim();
-        const fileName = filterVal ? `BaoCong_${filterVal}.xlsx` : "BaoCong_ChayThu.xlsx";
-        const ws = XLSX.utils.json_to_sheet(sortedData.map(item => ({ "Họ Tên": item.name, "Ngày Làm": item.date, "Khoảng Giờ": item.time_range, "Ghi Chú": item.note || "", "Thời Gian Gửi": item.created_at_time })));
-        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "BaoCong"); XLSX.writeFile(wb, fileName);
+        const val = document.getElementById('filterName').value.toLowerCase();
+        const dataToExport = allLogs.filter(l => l.name.toLowerCase().includes(val)).slice().sort((a,b) => a.id - b.id);
+        const ws = XLSX.utils.json_to_sheet(dataToExport.map(item => ({ "Họ Tên": item.name, "Ngày Làm": item.date, "Khoảng Giờ": item.time_range, "Ghi Chú": item.note || "", "Thời Gian Gửi": item.created_at_time })));
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "BaoCong"); XLSX.writeFile(wb, "BaoCong_ChayThu.xlsx");
     }
 </script>
 </body>
