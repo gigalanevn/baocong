@@ -2,13 +2,13 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Báo Công ChayThu</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #1a73e8; --shopee: #ee4d2d; --success: #34a853; --gray: #5f6368; }
-        body, html { height: 100%; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f1f3f4; overflow-x: hidden; }
+        body, html { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f1f3f4; }
         
         .top-banner { background: var(--primary); color: white; text-align: center; padding: 10px; font-weight: 800; font-size: 14px; letter-spacing: 1px; position: sticky; top: 0; z-index: 100; }
         .screen { display: none; width: 100%; min-height: 100vh; box-sizing: border-box; padding: 20px; }
@@ -17,61 +17,52 @@
         /* TRANG CHỦ */
         #screen-home { background: #ffffff; text-align: center; }
         .home-content { display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 20px auto; align-items: center; }
-
         .btn-main { width: 85%; padding: 20px; border-radius: 15px; font-size: 16px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; border: none; cursor: pointer; }
         .btn-shopee { background: var(--shopee); color: white; box-shadow: 0 6px 15px rgba(238, 77, 45, 0.2); }
         .btn-work { background: var(--primary); color: white; box-shadow: 0 6px 15px rgba(26, 115, 232, 0.2); }
 
-        /* TIÊU ĐỀ THÔNG BÁO */
+        /* THÔNG BÁO */
         .notice-title { width: 85%; text-align: left; font-weight: 800; color: var(--gray); font-size: 13px; margin-top: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
-
-        /* KHỐI THÔNG BÁO */
         #admin-notice { display: none; width: 90%; max-width: 400px; margin: 10px auto; background: #fff; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; }
-        .announcement-img { width: 100%; display: block; object-fit: cover; cursor: zoom-in; }
+        .announcement-img { width: 100%; display: block; cursor: zoom-in; }
         .text-before, .text-after { padding: 12px 15px; color: #333; font-size: 14px; font-weight: 500; line-height: 1.5; white-space: pre-wrap; }
-        .text-before { border-bottom: 1px solid #f9f9f9; }
-        .text-after { border-top: 1px solid #f9f9f9; }
 
-        /* ZOOM ẢNH */
-        #image-viewer { display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; cursor: zoom-out; }
-        #image-viewer img { max-width: 95%; max-height: 95%; border-radius: 5px; }
+        /* VIEWER PHÓNG TO ẢNH */
+        #image-viewer { 
+            display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.95); overflow: auto; touch-action: pinch-zoom;
+        }
+        #image-viewer img { 
+            margin: auto; display: block; max-width: 100%; transition: transform 0.2s; 
+        }
+        .close-zoom { position: fixed; top: 20px; right: 20px; color: white; font-size: 40px; font-weight: bold; z-index: 10000; cursor: pointer; }
 
         /* BÁO CÔNG */
-        .header { display: flex; align-items: center; margin-bottom: 20px; }
-        .btn-back { background: #e0e0e0; border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; margin-right: 15px; font-size: 13px; }
         .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; position: relative; }
-        label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 13px; color: var(--gray); }
-        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; outline: none; background: #fafafa; }
-        .clear-btn { position: absolute; right: 10px; top: 35px; width: 24px; height: 24px; background: #ccc; color: white; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; border: none; z-index: 5; }
-        .time-row { display: flex; gap: 8px; align-items: center; }
-        .time-box { flex: 1; background: #f1f3f4; border-radius: 10px; display: flex; align-items: center; padding: 0 5px; }
-        .time-box select { background: transparent; border: none; padding: 10px 0; font-weight: bold; }
-        #btnSend { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; }
-
-        /* LỊCH SỬ */
+        input, select { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #fafafa; }
+        #btnSend { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        
+        /* LOGS */
         .log-item { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; border-left: 6px solid var(--success); box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
-        .log-name { font-weight: 800; color: var(--primary); font-size: 16px; margin-bottom: 4px; }
-        .log-note { font-size: 14px; color: #333; margin: 6px 0; line-height: 1.4; }
-        .log-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .tag { background: #f1f3f4; color: var(--gray); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
-        .tag-time { background: #e8f5e9; color: var(--success); }
+        .tag { background: #f1f3f4; color: var(--gray); padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 5px; }
     </style>
 </head>
 <body>
 
     <div class="top-banner">CHAYTHU - HỆ THỐNG QUẢN LÝ NỘI BỘ</div>
 
-    <div id="image-viewer" onclick="this.style.display='none'"><img id="full-image" src=""></div>
+    <div id="image-viewer">
+        <span class="close-zoom" onclick="closeViewer()">&times;</span>
+        <img id="full-image" src="">
+    </div>
 
     <div id="screen-home" class="screen active">
         <div class="home-content">
-            <h2 style="color: #202124; margin-bottom: 10px;">CHAYTHU MENU</h2>
-            <a href="https://s.shopee.vn/6VHiHQX7nF" target="_blank" class="btn-main btn-shopee"><span>🛍️</span> MUA SẮM SHOPEE</a>
-            <button onclick="changeScreen('screen-work')" class="btn-main btn-work"><span>📝</span> VÀO BÁO CÔNG</button>
+            <h2 style="color: #202124;">CHAYTHU MENU</h2>
+            <a href="https://s.shopee.vn/6VHiHQX7nF" target="_blank" class="btn-main btn-shopee">🛍️ MUA SẮM SHOPEE</a>
+            <button onclick="changeScreen('screen-work')" class="btn-main btn-work">📝 VÀO BÁO CÔNG</button>
 
             <div class="notice-title">📢 THÔNG BÁO</div>
-
             <div id="admin-notice">
                 <div class="text-before" id="notice-before"></div>
                 <div id="image-container"></div>
@@ -81,208 +72,123 @@
     </div>
 
     <div id="screen-work" class="screen">
-        <div class="header">
-            <button class="btn-back" onclick="changeScreen('screen-home')">← QUAY LẠI</button>
-            <h3 style="margin:0; color: var(--primary); font-size: 18px;">BÁO CÔNG VIỆC</h3>
-        </div>
+        <button onclick="changeScreen('screen-home')" style="margin-bottom:15px; cursor:pointer;">← QUAY LẠI</button>
         <div class="card">
-            <div class="form-group">
-                <label>HỌ VÀ TÊN</label>
-                <input type="text" id="name" placeholder="Nhập tên..." oninput="handleNameInput(this)">
-            </div>
-            <div class="form-group">
-                <label>NGÀY LÀM VIỆC</label>
-                <input type="date" id="work_date">
-            </div>
-            <div class="form-group">
-                <label>NỘI DUNG GHI CHÚ</label>
-                <input type="text" id="note" placeholder="Nhập ghi chú..." oninput="handleNoteSave(this)">
-                <button class="clear-btn" id="clearNote" onclick="clearNoteInput()">✕</button>
-            </div>
-            <div class="form-group">
-                <label>THỜI GIAN LÀM</label>
-                <div class="time-row">
-                    <div class="time-box"><select id="sh"></select></div><span>:</span>
-                    <div class="time-box"><select id="sm"></select></div><span style="color:#999;">➔</span>
-                    <div class="time-box"><select id="eh"></select></div><span>:</span>
-                    <div class="time-box"><select id="em"></select></div>
-                </div>
-            </div>
+            <label>HỌ VÀ TÊN</label>
+            <input type="text" id="name" oninput="handleNameInput(this)"><br><br>
+            <label>NỘI DUNG GHI CHÚ</label>
+            <input type="text" id="note" oninput="localStorage.setItem('ct_note', this.value)"><br><br>
             <button onclick="submitData()" id="btnSend">XÁC NHẬN GỬI</button>
         </div>
-        <div class="history-section">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <span style="font-weight: 800; font-size: 13px; color: var(--gray);">🕒 LỊCH SỬ BÁO CÔNG</span>
-                <button onclick="exportExcelByFilter()" style="font-size: 11px; background: #fff; border: 1.5px solid var(--success); color: var(--success); padding: 5px 10px; border-radius: 8px; font-weight: bold;">📊 XUẤT EXCEL</button>
-            </div>
-            <input type="text" id="filterName" placeholder="Tìm tên để lọc..." oninput="filterLogs(this)" style="margin-bottom: 12px; padding: 12px; font-size: 14px; background: white; border: 1px solid #ddd; border-radius: 10px; width: 100%; box-sizing: border-box;">
-            <div id="logs"></div>
-        </div>
+        <div id="logs"></div>
     </div>
 
 <script>
     const SB_URL = "https://bcxaekeimoecixovogmm.supabase.co";
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjeGFla2VpbW9lY2l4b3ZvZ21tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NzM2NDEsImV4cCI6MjA4NDU0OTY0MX0.lh1C9UUq7Cim1uSK49MOeVJbTKc7L0MOUp-EZM9iehA";
-    
-    // Cấu hình không lưu session để tránh lỗi Storage của trình duyệt
-    const _sb = supabase.createClient(SB_URL, SB_KEY, { 
-        auth: { persistSession: false } 
-    });
+    const _sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
 
     let allLogs = [];
-    let realtimeChannel = null;
+    let channel = null;
 
-    function changeScreen(screenId) {
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById(screenId).classList.add('active');
-        window.scrollTo(0, 0);
+    function changeScreen(s) {
+        document.querySelectorAll('.screen').forEach(i => i.classList.remove('active'));
+        document.getElementById(s).classList.add('active');
     }
 
-    function formatName(str) { return str.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase()); }
-    function handleNameInput(el) { el.value = formatName(el.value); localStorage.setItem('ct_user', el.value); }
-    function handleNoteSave(el) { localStorage.setItem('ct_note', el.value); toggleClearBtn(el.value); }
-    function toggleClearBtn(val) { document.getElementById('clearNote').style.display = (val && val.length > 0) ? 'flex' : 'none'; }
-    function clearNoteInput() { const input = document.getElementById('note'); input.value = ""; localStorage.setItem('ct_note', ""); toggleClearBtn(""); input.focus(); }
+    function handleNameInput(el) {
+        el.value = el.value.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+        localStorage.setItem('ct_user', el.value);
+    }
 
-    // HÀM KHỞI TẠO REALTIME CÓ CHẾ ĐỘ TỰ KẾT NỐI LẠI
-    function initRealtime() {
-        if (realtimeChannel) {
-            _sb.removeChannel(realtimeChannel);
-        }
+    // TÍNH NĂNG XEM ẢNH
+    function openViewer(url) {
+        const viewer = document.getElementById('image-viewer');
+        const img = document.getElementById('full-image');
+        img.src = url;
+        viewer.style.display = 'flex';
+        // Cho phép zoom bằng ngón tay trên mobile
+        document.body.style.overflow = 'hidden'; 
+    }
 
-        realtimeChannel = _sb.channel('db-changes')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => {
-                console.log('Realtime: Settings updated');
-                loadNotice();
-            })
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_logs' }, () => {
-                console.log('Realtime: New log inserted');
-                loadLogs();
-            })
+    function closeViewer() {
+        document.getElementById('image-viewer').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    // REALTIME VỚI CHẾ ĐỘ TỰ RECONNECT
+    function connectRealtime() {
+        if(channel) _sb.removeChannel(channel);
+        channel = _sb.channel('db-changes')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => loadNotice())
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_logs' }, () => loadLogs())
             .subscribe((status) => {
-                console.log('Realtime Status:', status);
-                // Nếu bị ngắt kết nối, tự động thử lại sau 5 giây
-                if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
-                    setTimeout(initRealtime, 5000);
-                }
+                if(status === 'CLOSED' || status === 'CHANNEL_ERROR') setTimeout(connectRealtime, 5000);
             });
     }
 
     window.onload = () => {
-        initTime(); 
-        loadNotice(); 
-        loadLogs();
-        initRealtime(); // Bật bộ lính gác Realtime
-
-        document.getElementById('work_date').value = new Date().toISOString().split('T')[0];
+        loadNotice(); loadLogs(); connectRealtime();
         document.getElementById('name').value = localStorage.getItem('ct_user') || '';
         document.getElementById('note').value = localStorage.getItem('ct_note') || '';
         
-        // Khi người dùng quay lại tab sau khi để ẩn, ép web tải lại dữ liệu mới nhất
+        // Tự động load lại khi quay lại tab (Mobile cực kỳ cần cái này)
         document.addEventListener("visibilitychange", () => {
-            if (document.visibilityState === 'visible') {
-                loadNotice();
-                loadLogs();
-            }
+            if (document.visibilityState === 'visible') { loadNotice(); loadLogs(); }
         });
     };
 
     async function loadNotice() {
-        try {
-            const { data } = await _sb.from('settings').select('*').eq('id', 1).single();
-            if (!data || !data.is_active) { 
-                document.getElementById('admin-notice').style.display = 'none'; 
-                return; 
-            }
-
-            document.getElementById('admin-notice').style.display = 'block';
-            const imgContainer = document.getElementById('image-container');
-            imgContainer.innerHTML = '';
-
-            const textParts = (data.notice_text || "").split('---');
-            document.getElementById('notice-before').innerText = textParts[0].trim();
-            document.getElementById('notice-before').style.display = textParts[0] ? 'block' : 'none';
-            document.getElementById('notice-after').innerText = textParts[1] ? textParts[1].trim() : "";
-            document.getElementById('notice-after').style.display = textParts[1] ? 'block' : 'none';
-
-            if (data.notice_image_url) {
-                data.notice_image_url.split(',').forEach(link => {
-                    const url = link.trim();
-                    if(!url) return;
-                    const img = document.createElement('img');
-                    img.src = url; 
-                    img.className = 'announcement-img';
-                    img.onclick = () => { 
-                        document.getElementById('full-image').src = url; 
-                        document.getElementById('image-viewer').style.display = 'flex'; 
-                    };
-                    imgContainer.appendChild(img);
-                });
-            }
-        } catch (e) { console.error('Lỗi tải thông báo:', e); }
-    }
-
-    function initTime() {
-        const fill = (id, max, def) => {
-            const s = document.getElementById(id); s.innerHTML = '';
-            for(let i=0; i<max; i++) {
-                let v = i.toString().padStart(2, '0');
-                s.add(new Option(v, v, i===def, i===def));
-            }
-        };
-        fill('sh', 24, 8); fill('sm', 60, 0); fill('eh', 24, 20); fill('em', 60, 0);
-    }
-
-    async function loadLogs() {
-        const { data } = await _sb.from('work_logs').select('*').order('id', { ascending: false }).limit(500);
-        if(data) { allLogs = data; renderLogs(data); }
-    }
-
-    function renderLogs(data) {
-        const container = document.getElementById('logs'); 
-        container.innerHTML = '';
-        data.forEach(log => {
-            const displayDate = log.date.split('-').reverse().join('/');
-            const noteContent = log.note ? `<div class="log-note"><strong>Ghi chú:</strong> ${log.note}</div>` : '';
-            container.insertAdjacentHTML('beforeend', `<div class="log-item"><div class="log-name">${log.name}</div>${noteContent}<div class="log-meta"><span class="tag">📅 ${displayDate}</span><span class="tag">⏱ ${log.time_range}</span><span class="tag tag-time">📤 Gửi: ${log.created_at_time || '--:--'}</span></div></div>`);
-        });
-    }
-
-    function filterLogs(el) { renderLogs(allLogs.filter(l => l.name.toLowerCase().includes(el.value.toLowerCase()))); }
-
-    async function submitData() {
-        const btn = document.getElementById('btnSend');
-        const name = document.getElementById('name').value.trim();
-        if (!name) return alert("Vui lòng nhập tên!");
+        const { data } = await _sb.from('settings').select('*').eq('id', 1).single();
+        if (!data || !data.is_active) { document.getElementById('admin-notice').style.display = 'none'; return; }
         
-        btn.innerText = "ĐANG GỬI..."; btn.disabled = true;
-        const timeRange = `${document.getElementById('sh').value}:${document.getElementById('sm').value} - ${document.getElementById('eh').value}:${document.getElementById('em').value}`;
-        const timeSent = new Date().getHours().toString().padStart(2,'0') + ":" + new Date().getMinutes().toString().padStart(2,'0');
-        
-        const { error } = await _sb.from('work_logs').insert([{ 
-            name, 
-            note: document.getElementById('note').value.trim() || null, 
-            date: document.getElementById('work_date').value, 
-            time_range: timeRange, 
-            created_at_time: timeSent 
-        }]);
+        document.getElementById('admin-notice').style.display = 'block';
+        const imgContainer = document.getElementById('image-container');
+        imgContainer.innerHTML = '';
 
-        if(!error) { 
-            btn.innerText = "GỬI THÀNH CÔNG!"; 
-            initTime(); 
-            setTimeout(() => { btn.innerText = "XÁC NHẬN GỬI"; btn.disabled = false; }, 1500); 
-        } else { 
-            alert("Lỗi gửi!"); 
-            btn.disabled = false; 
-            btn.innerText = "XÁC NHẬN GỬI"; 
+        const textParts = (data.notice_text || "").split('---');
+        document.getElementById('notice-before').innerText = textParts[0]?.trim() || "";
+        document.getElementById('notice-after').innerText = textParts[1]?.trim() || "";
+
+        if (data.notice_image_url) {
+            data.notice_image_url.split(',').forEach(url => {
+                const img = document.createElement('img');
+                img.src = url.trim();
+                img.className = 'announcement-img';
+                img.onclick = () => openViewer(url.trim());
+                imgContainer.appendChild(img);
+            });
         }
     }
 
-    function exportExcelByFilter() {
-        const val = document.getElementById('filterName').value.toLowerCase();
-        const dataToExport = allLogs.filter(l => l.name.toLowerCase().includes(val)).slice().sort((a,b) => a.id - b.id);
-        const ws = XLSX.utils.json_to_sheet(dataToExport.map(item => ({ "Họ Tên": item.name, "Ngày Làm": item.date, "Khoảng Giờ": item.time_range, "Ghi Chú": item.note || "", "Thời Gian Gửi": item.created_at_time })));
-        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "BaoCong"); XLSX.writeFile(wb, "BaoCong_ChayThu.xlsx");
+    async function loadLogs() {
+        const { data } = await _sb.from('work_logs').select('*').order('id', { ascending: false }).limit(20);
+        if(data) {
+            const container = document.getElementById('logs');
+            container.innerHTML = '<h3>LỊCH SỬ GẦN ĐÂY</h3>';
+            data.forEach(log => {
+                container.insertAdjacentHTML('beforeend', `<div class="log-item"><b>${log.name}</b><p>${log.note || ''}</p><div><span class="tag">📅 ${log.date}</span><span class="tag">⏱ ${log.time_range}</span></div></div>`);
+            });
+        }
+    }
+
+    async function submitData() {
+        const name = document.getElementById('name').value.trim();
+        if (!name) return alert("Nhập tên!");
+        const btn = document.getElementById('btnSend');
+        btn.disabled = true; btn.innerText = "ĐANG GỬI...";
+        
+        const timeSent = new Date().getHours().toString().padStart(2,'0') + ":" + new Date().getMinutes().toString().padStart(2,'0');
+        const { error } = await _sb.from('work_logs').insert([{ 
+            name, 
+            note: document.getElementById('note').value || null, 
+            date: new Date().toISOString().split('T')[0], 
+            time_range: "08:00 - 20:00",
+            created_at_time: timeSent
+        }]);
+
+        if(!error) { btn.innerText = "THÀNH CÔNG!"; setTimeout(() => { btn.disabled = false; btn.innerText = "XÁC NHẬN GỬI"; }, 2000); }
+        else { alert("Lỗi!"); btn.disabled = false; }
     }
 </script>
 </body>
