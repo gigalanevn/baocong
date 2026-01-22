@@ -5,36 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Báo Công ChayThu</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        /* ... Các CSS cũ giữ nguyên ... */
         :root { --primary: #1a73e8; --shopee: #ee4d2d; --success: #34a853; --gray: #5f6368; }
-        body, html { margin: 0; padding: 0; font-family: sans-serif; background: #f1f3f4; }
-        .top-banner { background: var(--primary); color: white; text-align: center; padding: 10px; font-weight: 800; position: sticky; top: 0; z-index: 100; }
-        .screen { display: none; padding: 20px; }
+        body, html { margin: 0; padding: 0; font-family: -apple-system, sans-serif; background: #f1f3f4; overflow-x: hidden; }
+        
+        .top-banner { background: var(--primary); color: white; text-align: center; padding: 10px; font-weight: 800; font-size: 14px; position: sticky; top: 0; z-index: 100; }
+        .screen { display: none; width: 100%; min-height: 100vh; padding: 20px; box-sizing: border-box; }
         .screen.active { display: block; }
-        .btn-main { width: 85%; padding: 20px; border-radius: 15px; font-weight: 700; margin: 10px auto; display: flex; align-items: center; justify-content: center; border: none; cursor: pointer; text-decoration: none; }
-        .btn-shopee { background: var(--shopee); color: white; }
-        .btn-work { background: var(--primary); color: white; }
-        #admin-notice { display: none; background: #fff; border-radius: 15px; overflow: hidden; margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; width: 90%; }
-        .announcement-img { width: 100%; display: block; cursor: zoom-in; }
-        .text-before, .text-after { padding: 12px; font-size: 14px; white-space: pre-wrap; }
 
-        /* VIEWER NÂNG CẤP ĐỂ DI CHUYỂN 1 NGÓN TAY */
+        /* TRANG CHỦ */
+        #screen-home { background: #ffffff; text-align: center; }
+        .home-content { display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 20px auto; align-items: center; }
+
+        .btn-main { width: 85%; padding: 18px; border-radius: 15px; font-size: 16px; font-weight: 700; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 10px; border: none; cursor: pointer; }
+        .btn-shopee { background: var(--shopee); color: white; box-shadow: 0 6px 15px rgba(238, 77, 45, 0.2); }
+        .btn-work { background: var(--primary); color: white; box-shadow: 0 6px 15px rgba(26, 115, 232, 0.2); }
+
+        /* THÔNG BÁO */
+        .notice-title { width: 85%; text-align: left; font-weight: 800; color: var(--gray); font-size: 13px; margin-top: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px; }
+        #admin-notice { display: none; width: 90%; max-width: 400px; margin: 10px auto; background: #fff; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: left; }
+        .announcement-img { width: 100%; display: block; cursor: zoom-in; }
+        .text-before, .text-after { padding: 12px 15px; color: #333; font-size: 14px; line-height: 1.5; white-space: pre-wrap; font-weight: 500; }
+
+        /* VIEWER PHÓNG TO & DI CHUYỂN */
         #image-viewer { 
             display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.95); touch-action: none; overflow: hidden;
-            align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.95); touch-action: none; overflow: hidden; align-items: center; justify-content: center;
         }
-        #full-image { 
-            max-width: 100%; max-height: 100%; transform-origin: center;
-            transition: transform 0.1s ease-out; cursor: grab;
-        }
-        .close-zoom { position: fixed; top: 20px; right: 20px; color: white; font-size: 35px; z-index: 10001; }
+        #full-image { max-width: 100%; max-height: 100%; transform-origin: center; transition: transform 0.1s ease-out; }
+        .close-zoom { position: fixed; top: 20px; right: 20px; color: white; font-size: 40px; font-weight: bold; z-index: 10000; cursor: pointer; text-shadow: 0 0 10px #000; }
+
+        /* BÁO CÔNG */
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; text-align: left; }
+        input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 16px; box-sizing: border-box; background: #fafafa; margin-top: 5px; }
+        #btnSend { width: 100%; padding: 18px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 16px; font-weight: bold; margin-top: 15px; }
+        .log-item { background: white; padding: 15px; border-radius: 15px; margin-bottom: 12px; border-left: 6px solid var(--success); text-align: left; }
     </style>
 </head>
 <body>
 
-    <div class="top-banner">CHAYTHU - HỆ THỐNG QUẢN LÝ</div>
+    <div class="top-banner">CHAYTHU - HỆ THỐNG QUẢN LÝ NỘI BỘ</div>
 
     <div id="image-viewer">
         <span class="close-zoom" onclick="closeViewer()">&times;</span>
@@ -42,11 +53,12 @@
     </div>
 
     <div id="screen-home" class="screen active">
-        <div style="display:flex; flex-direction:column; align-items:center;">
-            <h2>CHAYTHU MENU</h2>
+        <div class="home-content">
+            <h2 style="color: #202124;">CHAYTHU MENU</h2>
             <a href="https://s.shopee.vn/6VHiHQX7nF" target="_blank" class="btn-main btn-shopee">🛍️ MUA SẮM SHOPEE</a>
             <button onclick="changeScreen('screen-work')" class="btn-main btn-work">📝 VÀO BÁO CÔNG</button>
-            <div style="width:85%; text-align:left; font-weight:bold; color:gray; margin-top:10px;">📢 THÔNG BÁO</div>
+
+            <div class="notice-title">📢 THÔNG BÁO</div>
             <div id="admin-notice">
                 <div class="text-before" id="notice-before"></div>
                 <div id="image-container"></div>
@@ -56,8 +68,16 @@
     </div>
 
     <div id="screen-work" class="screen">
-        <button onclick="changeScreen('screen-home')">← QUAY LẠI</button>
-        <p>Giao diện báo công...</p>
+        <button onclick="changeScreen('screen-home')" style="margin-bottom:15px;">← QUAY LẠI</button>
+        <div class="card">
+            <label style="font-weight: bold; font-size: 13px; color: var(--gray);">HỌ VÀ TÊN</label>
+            <input type="text" id="name" placeholder="Nhập tên..." oninput="handleNameInput(this)">
+            <br><br>
+            <label style="font-weight: bold; font-size: 13px; color: var(--gray);">GHI CHÚ CÔNG VIỆC</label>
+            <input type="text" id="note" placeholder="Nội dung làm việc..." oninput="localStorage.setItem('ct_note', this.value)">
+            <button onclick="submitData()" id="btnSend">XÁC NHẬN GỬI</button>
+        </div>
+        <div id="logs"></div>
     </div>
 
 <script>
@@ -65,67 +85,72 @@
     const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJjeGFla2VpbW9lY2l4b3ZvZ21tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg5NzM2NDEsImV4cCI6MjA4NDU0OTY0MX0.lh1C9UUq7Cim1uSK49MOeVJbTKc7L0MOUp-EZM9iehA";
     const _sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession: false } });
 
-    function changeScreen(s) {
-        document.querySelectorAll('.screen').forEach(i => i.classList.remove('active'));
-        document.getElementById(s).classList.add('active');
-    }
-
-    // --- LOGIC XỬ LÝ DI CHUYỂN VÀ ZOOM ẢNH ---
+    let allLogs = [];
     let scale = 1, posX = 0, posY = 0;
-    let startX, startY;
+    let lastPosX = 0, lastPosY = 0, lastScale = 1;
+    let startX, startY, initialDistance = 0;
     let isDragging = false;
+
     const img = document.getElementById('full-image');
     const viewer = document.getElementById('image-viewer');
 
-    function openViewer(url) {
-        img.src = url;
-        scale = 1; posX = 0; posY = 0;
-        updateTransform();
-        viewer.style.display = 'flex';
+    function changeScreen(s) {
+        document.querySelectorAll('.screen').forEach(i => i.classList.remove('active'));
+        document.getElementById(s).classList.add('active');
+        window.scrollTo(0,0);
     }
 
-    function closeViewer() { viewer.style.display = 'none'; }
+    function handleNameInput(el) {
+        el.value = el.value.toLowerCase().replace(/(^|\s)\S/g, l => l.toUpperCase());
+        localStorage.setItem('ct_user', el.value);
+    }
+
+    // --- XỬ LÝ ZOOM & DI CHUYỂN ĐA ĐIỂM ---
+    function openViewer(url) {
+        img.src = url; scale = 1; posX = 0; posY = 0;
+        updateTransform(); viewer.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeViewer() {
+        viewer.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
 
     function updateTransform() {
+        if (scale < 1) scale = 1;
+        if (scale > 5) scale = 5;
         img.style.transform = `translate(${posX}px, ${posY}px) scale(${scale})`;
     }
 
-    // Xử lý di chuyển bằng 1 ngón tay (hoặc chuột)
-    viewer.addEventListener('mousedown', e => { isDragging = true; startX = e.clientX - posX; startY = e.clientY - posY; });
-    viewer.addEventListener('mousemove', e => {
-        if (!isDragging) return;
-        posX = e.clientX - startX;
-        posY = e.clientY - startY;
-        updateTransform();
-    });
-    window.addEventListener('mouseup', () => isDragging = false);
-
-    // Xử lý cảm ứng trên điện thoại
     viewer.addEventListener('touchstart', e => {
         if (e.touches.length === 1) {
             isDragging = true;
             startX = e.touches[0].clientX - posX;
             startY = e.touches[0].clientY - posY;
+        } else if (e.touches.length === 2) {
+            isDragging = false;
+            initialDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            lastScale = scale;
         }
     });
-    viewer.addEventListener('touchmove', e => {
-        if (!isDragging || e.touches.length !== 1) return;
-        posX = e.touches[0].clientX - startX;
-        posY = e.touches[0].startY - startY; // Lỗi nhỏ ở đây đã sửa thành clientY bên dưới
-        posY = e.touches[0].clientY - startY;
-        updateTransform();
-    });
-    viewer.addEventListener('touchend', () => isDragging = false);
 
-    // Zoom bằng lăn chuột (Cho máy tính)
-    viewer.addEventListener('wheel', e => {
+    viewer.addEventListener('touchmove', e => {
         e.preventDefault();
-        scale += e.deltaY * -0.001;
-        scale = Math.min(Math.max(1, scale), 5); // Giới hạn zoom từ 1x đến 5x
-        updateTransform();
+        if (e.touches.length === 1 && isDragging) {
+            posX = e.touches[0].clientX - startX;
+            posY = e.touches[0].clientY - startY;
+            updateTransform();
+        } else if (e.touches.length === 2) {
+            const currentDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+            scale = lastScale * (currentDist / initialDistance);
+            updateTransform();
+        }
     }, { passive: false });
 
-    // --- LOGIC SUPABASE ---
+    viewer.addEventListener('touchend', () => { isDragging = false; lastScale = scale; });
+
+    // --- SUPABASE & REALTIME ---
     async function loadNotice() {
         const { data } = await _sb.from('settings').select('*').eq('id', 1).single();
         if (!data || !data.is_active) { document.getElementById('admin-notice').style.display = 'none'; return; }
@@ -140,18 +165,48 @@
         if (data.notice_image_url) {
             data.notice_image_url.split(',').forEach(url => {
                 const imgEl = document.createElement('img');
-                imgEl.src = url.trim();
-                imgEl.className = 'announcement-img';
+                imgEl.src = url.trim(); imgEl.className = 'announcement-img';
                 imgEl.onclick = () => openViewer(url.trim());
                 imgContainer.appendChild(imgEl);
             });
         }
     }
 
+    async function loadLogs() {
+        const { data } = await _sb.from('work_logs').select('*').order('id', { ascending: false }).limit(15);
+        if(data) {
+            const container = document.getElementById('logs');
+            container.innerHTML = '<h3 style="font-size:14px; color:gray;">LỊCH SỬ GẦN ĐÂY</h3>';
+            data.forEach(log => {
+                container.insertAdjacentHTML('beforeend', `<div class="log-item"><b>${log.name}</b><br><small>${log.date} | ${log.time_range}</small><p style="margin:5px 0 0 0; font-size:14px;">${log.note || ''}</p></div>`);
+            });
+        }
+    }
+
+    function initRealtime() {
+        _sb.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => loadNotice())
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'work_logs' }, () => loadLogs()).subscribe();
+    }
+
     window.onload = () => {
-        loadNotice();
-        _sb.channel('any').on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, () => loadNotice()).subscribe();
+        loadNotice(); loadLogs(); initRealtime();
+        document.getElementById('name').value = localStorage.getItem('ct_user') || '';
+        document.getElementById('note').value = localStorage.getItem('ct_note') || '';
+        document.addEventListener("visibilitychange", () => { if (document.visibilityState === 'visible') { loadNotice(); loadLogs(); } });
     };
+
+    async function submitData() {
+        const name = document.getElementById('name').value.trim();
+        if (!name) return alert("Nhập tên!");
+        const btn = document.getElementById('btnSend');
+        btn.disabled = true; btn.innerText = "ĐANG GỬI...";
+        const { error } = await _sb.from('work_logs').insert([{ 
+            name, note: document.getElementById('note').value || null, 
+            date: new Date().toISOString().split('T')[0], time_range: "08:00 - 20:00"
+        }]);
+        if(!error) { btn.innerText = "THÀNH CÔNG!"; setTimeout(() => { btn.disabled = false; btn.innerText = "XÁC NHẬN GỬI"; }, 2000); }
+        else { alert("Lỗi kết nối!"); btn.disabled = false; }
+    }
 </script>
 </body>
 </html>
